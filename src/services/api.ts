@@ -461,6 +461,17 @@ export const api = {
   },
 
   /**
+   * Get direct URL for downloading dataset records and audio files as a ZIP archive
+   */
+  getDatasetZipExportUrl(datasetId?: string, languageId?: number | string): string {
+    const params = new URLSearchParams();
+    if (datasetId && datasetId !== 'all') params.set('dataset_id', datasetId);
+    if (languageId && languageId !== 'all') params.set('language_id', String(languageId));
+    const qs = params.toString();
+    return `${API_BASE}/records/export-zip${qs ? `?${qs}` : ''}`;
+  },
+
+  /**
    * Audio Upload via FastAPI -> uploaded to remote Chibisafe server
    */
   async uploadAudio(file: File, languageId: string | number): Promise<{ audio_url: string; filename: string; duration: number; uuid?: string }> {

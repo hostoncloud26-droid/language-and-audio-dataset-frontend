@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dataset, DatasetRecord, Language } from '../types';
 import { api } from '../services/api';
+import { exportDatasetAsZip } from '../services/zipExportService';
 import { DatasetControls } from '../components/Datasets/DatasetControls';
 import { DatasetTable } from '../components/Datasets/DatasetTable';
 import { Layers, X, Plus, Loader2, CheckCircle2 } from 'lucide-react';
@@ -32,6 +33,10 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
 
   // Toast feedback
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // ZIP Export State
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const [exportProgressText, setExportProgressText] = useState<string>('');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -121,37 +126,6 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
   };
 
 
-  const handleExportData = () => {
-    const dataToExport = {
-      exported_at: new Date().toISOString(),
-      platform: 'Language & Audio Dataset Platform',
-      dataset_filter: selectedDatasetId || 'All',
-      language_filter: selectedLanguageId || 'All',
-      total_records: filteredRecords.length,
-      records: filteredRecords.map((r) => ({
-        id: r.id,
-        dataset_id: r.dataset_id,
-        text: r.text,
-        audio_url: r.audio_url,
-        language_id: r.language_id,
-        language_name: r.language_name,
-        duration: r.duration,
-        created_at: r.created_at,
-      })),
-    };
-
-    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dataset_export_${selectedDatasetId || 'all'}_${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showToast(`Exported ${filteredRecords.length} records to JSON.`);
-  };
-
   const filteredRecords = records.filter((rec) => {
     const matchesSearch =
       !searchText ||
@@ -166,6 +140,39 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
 
     return matchesSearch && matchesDataset && matchesLanguage;
   });
+
+  const handleExportData = async () => {
+    if (filteredRecords.length === 0) {
+      showToast('No records match your filters to export.');
+      return;
+    }
+
+    setIsExporting(true);
+    setExportProgressText('Preparing ZIP...');
+    showToast(`Starting ZIP export for ${filteredRecords.length} audio recordings...`);
+
+    const currentDataset = datasets.find((d) => d.id === selectedDatasetId);
+    const currentLang = languages.find((l) => String(l.id) === String(selectedLanguageId));
+
+    try {
+      const result = await exportDatasetAsZip(filteredRecords, {
+        datasetId: selectedDatasetId || 'all_datasets',
+        datasetName: currentDataset?.name || 'All Audio Recordings',
+        languageFilter: currentLang?.name || 'All Languages',
+        onProgress: (_completed, _total, message) => {
+          setExportProgressText(message);
+        },
+      });
+
+      showToast(`✅ Exported "${result.filename}" with ${result.totalAudioFiles} audio files & metadata.`);
+    } catch (err: any) {
+      console.error('Failed to export dataset zip:', err);
+      showToast(`Export failed: ${err.message || 'Unknown error'}`);
+    } finally {
+      setIsExporting(false);
+      setExportProgressText('');
+    }
+  };
 
   return (
     <div className="page-content">
@@ -194,6 +201,8 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
           setModalError(null);
         }}
         onExportData={handleExportData}
+        isExporting={isExporting}
+        exportProgressText={exportProgressText}
       />
 
       <DatasetTable

@@ -4,9 +4,9 @@
  */
 
 /**
- * Generates a playable, browser-native 16-bit PCM WAV audio Blob URL
+ * Generates a playable, browser-native 16-bit PCM WAV audio Blob
  */
-export function createPlayableWavUrl(frequency: number = 440, durationSeconds: number = 3.5): string {
+export function createPlayableWavBlob(frequency: number = 440, durationSeconds: number = 3.5): Blob {
   const sampleRate = 22050;
   const totalSamples = Math.floor(sampleRate * durationSeconds);
   const buffer = new ArrayBuffer(44 + totalSamples * 2);
@@ -51,7 +51,14 @@ export function createPlayableWavUrl(frequency: number = 440, durationSeconds: n
     view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
   }
 
-  const blob = new Blob([buffer], { type: 'audio/wav' });
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
+/**
+ * Generates a playable, browser-native 16-bit PCM WAV audio Blob URL
+ */
+export function createPlayableWavUrl(frequency: number = 440, durationSeconds: number = 3.5): string {
+  const blob = createPlayableWavBlob(frequency, durationSeconds);
   return URL.createObjectURL(blob);
 }
 

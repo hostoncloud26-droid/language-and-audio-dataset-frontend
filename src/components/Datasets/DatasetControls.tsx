@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dataset, Language } from '../../types';
-import { Search, RefreshCw, Filter, Layers, Plus, Download } from 'lucide-react';
+import { Search, RefreshCw, Filter, Layers, Plus, Download, Loader2 } from 'lucide-react';
 
 interface DatasetControlsProps {
   datasets: Dataset[];
@@ -15,6 +15,8 @@ interface DatasetControlsProps {
   isRefreshing: boolean;
   onOpenCreateModal?: () => void;
   onExportData?: () => void;
+  isExporting?: boolean;
+  exportProgressText?: string;
 }
 
 export const DatasetControls: React.FC<DatasetControlsProps> = ({
@@ -30,6 +32,8 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
   isRefreshing,
   onOpenCreateModal,
   onExportData,
+  isExporting = false,
+  exportProgressText = '',
 }) => {
   return (
     <div className="dataset-top-controls">
@@ -87,10 +91,21 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
             type="button"
             className="btn-secondary"
             onClick={onExportData}
-            title="Export filtered records as JSON"
+            disabled={isExporting}
+            title="Export all audio files and metadata as a ZIP archive"
+            style={{ minWidth: isExporting ? '140px' : 'auto' }}
           >
-            <Download size={15} />
-            <span>Export</span>
+            {isExporting ? (
+              <>
+                <Loader2 size={15} className="spin-icon" />
+                <span>{exportProgressText || 'Exporting ZIP...'}</span>
+              </>
+            ) : (
+              <>
+                <Download size={15} />
+                <span>Export ZIP</span>
+              </>
+            )}
           </button>
         )}
 
