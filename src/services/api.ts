@@ -193,20 +193,19 @@ export const api = {
   },
 
   /**
-   * Register a new user with FastAPI backend (enforcing OTP verification)
+   * Register a new user with FastAPI backend
    */
   async register(
     username: string,
     password: string,
     name?: string,
-    role?: string,
-    otp?: string
+    role?: string
   ): Promise<{ token: string; user: User }> {
     try {
       const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, name, role, otp }),
+        body: JSON.stringify({ username, password, name, role }),
       });
       if (res.ok) {
         const data = await res.json();
