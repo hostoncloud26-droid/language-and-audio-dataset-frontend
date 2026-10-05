@@ -3,7 +3,7 @@ import { Language } from '../../types';
 import { TableSkeleton } from '../common/TableSkeleton';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorBanner } from '../common/ErrorBanner';
-import { Globe, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Globe, Trash2, ToggleLeft, ToggleRight, Download, Loader2 } from 'lucide-react';
 
 interface LanguageTableProps {
   languages: Language[];
@@ -12,6 +12,8 @@ interface LanguageTableProps {
   onRetry: () => void;
   onToggleStatus?: (langId: string | number, currentStatus: string) => void;
   onDeleteLanguage?: (langId: string | number, langName: string) => void;
+  onDownloadLanguage?: (language: Language) => void;
+  downloadingLangId?: string | number | null;
   pageSize?: number;
 }
 
@@ -22,6 +24,8 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
   onRetry,
   onToggleStatus,
   onDeleteLanguage,
+  onDownloadLanguage,
+  downloadingLangId = null,
   pageSize = 6,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -64,10 +68,10 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
         <table className="data-table">
           <thead>
             <tr>
-              <th style={{ width: '12%' }}>ID</th>
-              <th style={{ width: '48%' }}>Project / Language</th>
-              <th style={{ width: '25%' }}>Status</th>
-              <th style={{ width: '15%', textAlign: 'right' }}>Actions</th>
+              <th style={{ width: '10%' }}>ID</th>
+              <th style={{ width: '38%' }}>Project</th>
+              <th style={{ width: '20%' }}>Status</th>
+              <th style={{ width: '32%', textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -116,7 +120,29 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
                     </button>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+                      {onDownloadLanguage && (
+                        <button
+                          type="button"
+                          className="btn-download-action"
+                          onClick={() => onDownloadLanguage(lang)}
+                          disabled={downloadingLangId === lang.id}
+                          title={`Download ${lang.name} dataset ZIP archive`}
+                        >
+                          {downloadingLangId === lang.id ? (
+                            <>
+                              <Loader2 size={13} className="spin-icon" />
+                              <span>Downloading...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Download size={13} />
+                              <span>Download</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+
                       {onToggleStatus && (
                         <button
                           type="button"

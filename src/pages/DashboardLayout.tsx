@@ -12,7 +12,7 @@ export const DashboardLayout: React.FC = () => {
   const getPageTitle = () => {
     switch (activeTab) {
       case 'languages':
-        return 'Projects & Languages';
+        return 'Projects';
       case 'datasets':
         return 'Audio Datasets & Files';
       case 'collect':
