@@ -171,7 +171,7 @@ export const api = {
   /**
    * Send a 6-digit OTP verification code to user email
    */
-  async sendOtp(email: string): Promise<{ success: boolean; message: string; dev_otp?: string }> {
+  async sendOtp(email: string): Promise<{ success: boolean; message: string }> {
     try {
       const res = await fetch(`${API_BASE}/auth/send-otp`, {
         method: 'POST',

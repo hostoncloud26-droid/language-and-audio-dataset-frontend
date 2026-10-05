@@ -20,7 +20,6 @@ import {
   KeyRound,
   RotateCcw,
   Pencil,
-  Sparkles,
 } from 'lucide-react';
 
 interface RegisterPageProps {
@@ -46,7 +45,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
   const [otp, setOtp] = useState('');
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [countdown, setCountdown] = useState(0);
-  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [successInfo, setSuccessInfo] = useState<string | null>(null);
 
@@ -89,13 +87,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
 
     setIsSendingOtp(true);
     try {
-      const res = await api.sendOtp(cleanUser);
+      await api.sendOtp(cleanUser);
       setStep('otp');
       setCountdown(60);
       setSuccessInfo(`Verification code sent to ${cleanUser}. Please check your inbox.`);
-      if (res.dev_otp) {
-        setDevOtpHint(res.dev_otp);
-      }
     } catch (err: any) {
       setValidationError(err.message || 'Failed to send verification code.');
     } finally {
@@ -110,12 +105,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
     setValidationError(null);
     setIsSendingOtp(true);
     try {
-      const res = await api.sendOtp(username.trim().toLowerCase());
+      await api.sendOtp(username.trim().toLowerCase());
       setCountdown(60);
       setSuccessInfo('A fresh verification code has been sent.');
-      if (res.dev_otp) {
-        setDevOtpHint(res.dev_otp);
-      }
     } catch (err: any) {
       setValidationError(err.message || 'Failed to resend code.');
     } finally {
@@ -527,44 +519,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
                 >
                   <CheckCircle2 size={16} color="#059669" />
                   <span>{successInfo}</span>
-                </div>
-              )}
-
-              {/* Dev OTP Helper Banner if present */}
-              {devOtpHint && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 12px',
-                    background: '#eff6ff',
-                    border: '1px dashed #93c5fd',
-                    borderRadius: '8px',
-                    marginBottom: '16px',
-                    fontSize: '0.82rem',
-                    color: '#1e40af',
-                  }}
-                >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <Sparkles size={14} color="#0284c7" />
-                    <strong>Dev Code:</strong> {devOtpHint}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setOtp(devOtpHint)}
-                    style={{
-                      background: '#0284c7',
-                      color: '#ffffff',
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.74rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Auto-Fill
-                  </button>
                 </div>
               )}
 
