@@ -169,14 +169,44 @@ export const api = {
   },
 
   /**
-   * Register a new user with FastAPI backend
+   * Send a 6-digit OTP verification code to user email
    */
-  async register(username: string, password: string, name?: string, role?: string): Promise<{ token: string; user: User }> {
+  async sendOtp(email: string): Promise<{ success: boolean; message: string; dev_otp?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        return await res.json();
+      } else {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.detail || 'Failed to send verification code.');
+      }
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
+        throw err;
+      }
+      throw new Error('Unable to connect to the backend server. Please verify backend is running at ' + API_BASE);
+    }
+  },
+
+  /**
+   * Register a new user with FastAPI backend (enforcing OTP verification)
+   */
+  async register(
+    username: string,
+    password: string,
+    name?: string,
+    role?: string,
+    otp?: string
+  ): Promise<{ token: string; user: User }> {
     try {
       const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, name, role }),
+        body: JSON.stringify({ username, password, name, role, otp }),
       });
       if (res.ok) {
         const data = await res.json();

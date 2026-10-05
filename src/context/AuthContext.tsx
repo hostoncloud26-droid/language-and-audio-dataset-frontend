@@ -4,7 +4,7 @@ import { api, getStoredToken, getStoredUser, clearStoredAuth } from '../services
 
 interface AuthContextType extends AuthState {
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string, name?: string, role?: string) => Promise<void>;
+  register: (username: string, password: string, name?: string, role?: string, otp?: string) => Promise<void>;
   logout: () => void;
   error: string | null;
   clearError: () => void;
@@ -45,11 +45,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (username: string, password: string, name?: string, role?: string) => {
+  const register = async (username: string, password: string, name?: string, role?: string, otp?: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.register(username, password, name, role);
+      const response = await api.register(username, password, name, role, otp);
       setToken(response.token);
       setUser(response.user);
     } catch (err: any) {
