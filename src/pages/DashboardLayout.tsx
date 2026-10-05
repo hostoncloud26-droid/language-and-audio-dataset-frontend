@@ -14,7 +14,7 @@ export const DashboardLayout: React.FC = () => {
       case 'languages':
         return 'Projects & Languages';
       case 'datasets':
-        return 'Audio Datasets';
+        return 'Audio Datasets & Files';
       case 'collect':
         return 'Collect & Annotate Audio';
       default:

@@ -18,7 +18,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     { id: 'languages' as NavTab, label: 'Projects', icon: FolderKanban },
-    { id: 'datasets' as NavTab, label: 'Datasets', icon: Database },
+    { id: 'datasets' as NavTab, label: 'Datasets & Files', icon: Database },
     { id: 'collect' as NavTab, label: 'Collect Data', icon: Mic },
   ];
 

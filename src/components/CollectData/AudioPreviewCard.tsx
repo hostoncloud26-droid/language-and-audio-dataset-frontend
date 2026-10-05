@@ -175,8 +175,7 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
             <span>Final Text</span>
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* TTS Regenerate Audio commented out for now until the correct voice model is provided */}
-            {/*
+            {/* TTS Regenerate Audio */}
             <button
               type="button"
               className="btn-secondary"
@@ -196,21 +195,20 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
                 borderRadius: '6px',
                 cursor: (!finalText.trim() || isRegenerating || isSubmitting) ? 'not-allowed' : 'pointer'
               }}
-              title="Regenerate audio using the current Final Text"
+              title="Regenerate speech audio using the updated Final Text (TTS)"
             >
               {isRegenerating ? (
                 <>
                   <Loader2 size={14} className="spin-icon" />
-                  <span>Regenerating...</span>
+                  <span>Regenerating (TTS)...</span>
                 </>
               ) : (
                 <>
                   <RotateCcw size={14} />
-                  <span>Regenerate Audio</span>
+                  <span>Regenerate (TTS)</span>
                 </>
               )}
             </button>
-            */}
           </div>
         </div>
         <textarea

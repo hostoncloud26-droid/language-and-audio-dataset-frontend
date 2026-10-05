@@ -212,28 +212,26 @@ export const TextInputArea: React.FC<TextInputAreaProps> = ({
       {/* Action Buttons Row */}
       {!isLocked && (
         <div className="action-buttons-row">
-          {/* TTS speech generation commented out for now until the correct voice model is provided */}
-          {/*
+          {/* TTS Speech Generation Button (OmniVoice / Neural TTS Engine) */}
           <button
             type="button"
             className="btn-action-generate"
             onClick={onGenerate}
             disabled={!text.trim() || isGenerating || isUploading}
-            title={!text.trim() ? 'Enter text to generate audio' : 'Synthesize speech from entered text with OmniVoice'}
+            title={!text.trim() ? 'Enter text to synthesize speech' : 'Synthesize speech from entered text with Text-to-Speech (TTS)'}
           >
             {isGenerating ? (
               <>
                 <Loader2 size={18} className="spin-icon" />
-                <span>Generating Speech...</span>
+                <span>Generating Speech (TTS)...</span>
               </>
             ) : (
               <>
                 <Sparkles size={18} />
-                <span>Generate Audio</span>
+                <span>Generate Audio (TTS)</span>
               </>
             )}
           </button>
-          */}
 
           <button
             type="button"

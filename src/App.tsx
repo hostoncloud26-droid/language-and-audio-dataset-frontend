@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AudioPlayerProvider } from './context/AudioPlayerContext';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { DashboardLayout } from './pages/DashboardLayout';
 import { Loader2 } from 'lucide-react';
 
 const MainApp: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [authView, setAuthView] = useState<'login' | 'register'>('login');
 
   if (isLoading) {
     return (
@@ -19,7 +21,15 @@ const MainApp: React.FC = () => {
     );
   }
 
-  return isAuthenticated ? <DashboardLayout /> : <LoginPage />;
+  if (isAuthenticated) {
+    return <DashboardLayout />;
+  }
+
+  return authView === 'login' ? (
+    <LoginPage onNavigateToRegister={() => setAuthView('register')} />
+  ) : (
+    <RegisterPage onNavigateToLogin={() => setAuthView('login')} />
+  );
 };
 
 export const App: React.FC = () => {

@@ -143,7 +143,7 @@ export function clearStoredAuth() {
 
 export const api = {
   /**
-   * Login with FastAPI backend (falls back gracefully if offline)
+   * Login with FastAPI backend
    */
   async login(username: string, password: string): Promise<{ token: string; user: User }> {
     try {
@@ -161,25 +161,11 @@ export const api = {
         throw new Error(errData?.detail || 'Invalid username or password');
       }
     } catch (err: any) {
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError')) {
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
         throw err;
       }
-      // If network offline, allow demo session
+      throw new Error('Unable to connect to the backend server. Please verify backend is running at ' + API_BASE);
     }
-
-    if (username && username.trim().length > 0 && password && password.trim().length > 0) {
-      const token = 'demo-session-token-' + Date.now();
-      const user: User = {
-        id: 'usr-' + Date.now().toString().slice(-4),
-        username: username.trim(),
-        name: username.includes('@') ? username.split('@')[0] : username.trim(),
-        role: 'Dataset Specialist',
-      };
-      setStoredAuth(token, user);
-      return { token, user };
-    }
-
-    throw new Error('Invalid username or password');
   },
 
   /**
@@ -201,19 +187,10 @@ export const api = {
         throw new Error(errData?.detail || 'Failed to register account');
       }
     } catch (err: any) {
-      if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError')) {
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
         throw err;
       }
-      // Offline fallback
-      const token = 'demo-session-token-' + Date.now();
-      const user: User = {
-        id: 'usr-' + Date.now().toString().slice(-4),
-        username: username.trim(),
-        name: name?.trim() || (username.includes('@') ? username.split('@')[0] : username.trim()),
-        role: role || 'Dataset Specialist',
-      };
-      setStoredAuth(token, user);
-      return { token, user };
+      throw new Error('Unable to connect to the backend server. Please verify backend is running at ' + API_BASE);
     }
   },
 

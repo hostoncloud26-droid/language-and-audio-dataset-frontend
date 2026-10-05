@@ -4,7 +4,7 @@ import { DatasetRow } from './DatasetRow';
 import { TableSkeleton } from '../common/TableSkeleton';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorBanner } from '../common/ErrorBanner';
-import { Mic } from 'lucide-react';
+import { Mic, Clock, FileAudio, Download, FileText } from 'lucide-react';
 
 interface DatasetTableProps {
   records: DatasetRecord[];
@@ -25,14 +25,14 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
   onNavigateToCollect,
   onDeleteRecord,
   onUpdateRecord,
-  pageSize = 5,
+  pageSize = 6,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   if (isLoading) {
     return (
       <div className="card">
-        <TableSkeleton rows={pageSize} columns={4} />
+        <TableSkeleton rows={pageSize} columns={6} />
       </div>
     );
   }
@@ -69,10 +69,28 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
         <table className="data-table">
           <thead>
             <tr>
-              <th style={{ width: '15%' }}>ID</th>
-              <th style={{ width: '45%' }}>Text</th>
-              <th style={{ width: '30%' }}>Audio</th>
-              <th style={{ width: '10%', textAlign: 'right' }}>Actions</th>
+              <th style={{ width: '12%' }}>ID</th>
+              <th style={{ width: '28%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <FileText size={14} /> Transcript
+                </span>
+              </th>
+              <th style={{ width: '11%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <FileAudio size={14} /> Type
+                </span>
+              </th>
+              <th style={{ width: '16%' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <Clock size={14} /> Upload Time
+                </span>
+              </th>
+              <th style={{ width: '18%' }}>Audio Preview</th>
+              <th style={{ width: '15%', textAlign: 'right' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <Download size={14} /> Download & Actions
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>

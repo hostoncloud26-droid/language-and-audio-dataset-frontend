@@ -11,37 +11,23 @@ import {
   Layers,
   Volume2,
   ShieldCheck,
-  CheckCircle2,
-  Sparkles,
   ArrowRight,
   UserPlus,
   LogIn,
 } from 'lucide-react';
 
-export const LoginPage: React.FC = () => {
-  const { login, register, isLoading, error, clearError } = useAuth();
-  const [tab, setTab] = useState<'login' | 'register'>('login');
+interface LoginPageProps {
+  onNavigateToRegister?: () => void;
+}
 
-  // Login form state
-  const [username, setUsername] = useState('janu09@gmail.com');
-  const [password, setPassword] = useState('password123');
+export const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToRegister }) => {
+  const { login, isLoading, error, clearError } = useAuth();
+
+  // Login form state - clean, no demo pre-fill
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Register form state
-  const [regName, setRegName] = useState('');
-  const [regUsername, setRegUsername] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regRole, setRegRole] = useState('Dataset Specialist');
-
   const [validationError, setValidationError] = useState<string | null>(null);
-
-  const handleQuickFill = (user: string, pass: string) => {
-    setTab('login');
-    setUsername(user);
-    setPassword(pass);
-    clearError();
-    setValidationError(null);
-  };
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,27 +53,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    clearError();
-    setValidationError(null);
-
-    if (!regUsername.trim()) {
-      setValidationError('Username / Email is required for registration.');
-      return;
-    }
-    if (!regPassword || regPassword.length < 4) {
-      setValidationError('Password must be at least 4 characters long.');
-      return;
-    }
-
-    try {
-      await register(regUsername.trim(), regPassword.trim(), regName.trim(), regRole);
-    } catch {
-      // Handled in auth context
-    }
-  };
-
   const activeError = validationError || error;
 
   return (
@@ -102,7 +67,16 @@ export const LoginPage: React.FC = () => {
               </div>
               <div>
                 <span className="hero-brand-name">Dataset Platform</span>
-                <span style={{ display: 'block', fontSize: '0.72rem', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700 }}>
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: '0.72rem',
+                    color: '#93c5fd',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    fontWeight: 700,
+                  }}
+                >
                   Acoustic Intelligence
                 </span>
               </div>
@@ -143,7 +117,7 @@ export const LoginPage: React.FC = () => {
                   <div className="hero-feature-icon">
                     <Volume2 size={15} color="#a7f3d0" />
                   </div>
-                  <span>Instant harmonic voice generation across English, Tamil & Hindi</span>
+                  <span>Instant neural voice generation across English, Tamil & Hindi</span>
                 </div>
                 <div className="hero-feature-item">
                   <div className="hero-feature-icon">
@@ -156,85 +130,62 @@ export const LoginPage: React.FC = () => {
           </div>
 
           {/* Hero Footer */}
-          <div className="hero-footer" style={{ justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontFamily: 'var(--font-mono)' }}>
-              v1.0.0
+          <div className="hero-footer" style={{ justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+              New to Dataset Platform?
             </span>
+            {onNavigateToRegister && (
+              <button
+                type="button"
+                onClick={onNavigateToRegister}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.84rem',
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  transition: 'background 0.2s',
+                }}
+              >
+                <UserPlus size={14} />
+                <span>Create Account</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* Right Form Pane */}
         <div className="login-form-pane">
-          {/* Sign In vs Register Switcher */}
-          <div className="login-tab-switcher">
-            <button
-              type="button"
-              className={`login-tab-btn ${tab === 'login' ? 'active' : ''}`}
-              onClick={() => {
-                setTab('login');
-                clearError();
-                setValidationError(null);
+          {/* Header */}
+          <div style={{ marginBottom: '24px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                color: 'var(--primary)',
+                background: 'var(--primary-subtle)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                marginBottom: '8px',
               }}
             >
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <LogIn size={15} />
-                <span>Sign In</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              className={`login-tab-btn ${tab === 'register' ? 'active' : ''}`}
-              onClick={() => {
-                setTab('register');
-                clearError();
-                setValidationError(null);
-              }}
-            >
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <UserPlus size={15} />
-                <span>Create Account</span>
-              </div>
-            </button>
-          </div>
-
-          {/* Quick Demo Credentials Pill Bar */}
-          {tab === 'login' && (
-            <div className="quick-credentials-box">
-              <div className="quick-credentials-header">
-                <span>Quick Credentials:</span>
-                <span style={{ color: 'var(--primary)', fontWeight: 600 }}>1-Click Fill</span>
-              </div>
-              <div className="quick-chips-row">
-                <button
-                  type="button"
-                  className="quick-chip"
-                  onClick={() => handleQuickFill('janu09@gmail.com', 'password123')}
-                  title="Fill Janu specialist credentials"
-                >
-                  <Sparkles size={12} color="#0284c7" />
-                  <span>Janu (Specialist)</span>
-                </button>
-                <button
-                  type="button"
-                  className="quick-chip"
-                  onClick={() => handleQuickFill('admin', 'admin123')}
-                  title="Fill Administrator credentials"
-                >
-                  <ShieldCheck size={12} color="#0d9488" />
-                  <span>Admin</span>
-                </button>
-                <button
-                  type="button"
-                  className="quick-chip"
-                  onClick={() => handleQuickFill('specialist', 'DatasetUser@2026!')}
-                  title="Fill Specialist credentials"
-                >
-                  <UserIcon size={12} color="#6366f1" />
-                  <span>Specialist</span>
-                </button>
-              </div>
+              <LogIn size={14} />
+              <span>Secure Sign In</span>
             </div>
-          )}
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              Welcome Back
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Enter your credentials to access the audio datasets dashboard.
+            </p>
+          </div>
 
           {/* Error Alert with Close button */}
           {activeError && (
@@ -255,197 +206,121 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Tab 1: SIGN IN FORM */}
-          {tab === 'login' && (
-            <form onSubmit={handleLoginSubmit}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="login-username">
-                  Username or Email
-                </label>
-                <div className="input-wrapper">
-                  <UserIcon size={18} className="input-icon-left" />
-                  <input
-                    id="login-username"
-                    type="text"
-                    className="form-input has-icon"
-                    placeholder="e.g. janu09@gmail.com, admin"
-                    value={username}
-                    onChange={(e) => {
-                      setUsername(e.target.value);
-                      if (activeError) {
-                        clearError();
-                        setValidationError(null);
-                      }
-                    }}
-                    disabled={isLoading}
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <label className="form-label" htmlFor="login-password">
-                    Password
-                  </label>
-                </div>
-                <div className="input-wrapper">
-                  <Lock size={18} className="input-icon-left" />
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    className="form-input has-icon"
-                    placeholder="Enter account password"
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (activeError) {
-                        clearError();
-                        setValidationError(null);
-                      }
-                    }}
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    className="input-btn-right"
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ marginTop: '16px', height: '46px', fontSize: '0.98rem' }}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={18} className="spin-icon" />
-                    <span>Signing in...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Sign In to Dashboard</span>
-                    <ArrowRight size={17} />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {/* Tab 2: CREATE ACCOUNT FORM */}
-          {tab === 'register' && (
-            <form onSubmit={handleRegisterSubmit}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="reg-name">
-                  Full Name
-                </label>
-                <div className="input-wrapper">
-                  <UserIcon size={18} className="input-icon-left" />
-                  <input
-                    id="reg-name"
-                    type="text"
-                    className="form-input has-icon"
-                    placeholder="e.g. Janu S"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    disabled={isLoading}
-                    autoFocus
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="reg-username">
-                  Username or Email
-                </label>
-                <div className="input-wrapper">
-                  <UserIcon size={18} className="input-icon-left" />
-                  <input
-                    id="reg-username"
-                    type="text"
-                    className="form-input has-icon"
-                    placeholder="e.g. janu09@gmail.com"
-                    value={regUsername}
-                    onChange={(e) => setRegUsername(e.target.value)}
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="reg-role">
-                  Platform Role
-                </label>
-                <select
-                  id="reg-role"
-                  className="dataset-select"
-                  style={{ width: '100%', height: '44px' }}
-                  value={regRole}
-                  onChange={(e) => setRegRole(e.target.value)}
+          {/* SIGN IN FORM */}
+          <form onSubmit={handleLoginSubmit}>
+            <div className="form-group">
+              <label className="form-label" htmlFor="login-username">
+                Username or Email
+              </label>
+              <div className="input-wrapper">
+                <UserIcon size={18} className="input-icon-left" />
+                <input
+                  id="login-username"
+                  type="text"
+                  className="form-input has-icon"
+                  placeholder="Enter your username or email"
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    if (activeError) {
+                      clearError();
+                      setValidationError(null);
+                    }
+                  }}
                   disabled={isLoading}
-                >
-                  <option value="Dataset Specialist">Dataset Specialist</option>
-                  <option value="Speech Annotator">Speech Annotator</option>
-                  <option value="Dataset Reviewer">Dataset Reviewer</option>
-                  <option value="Administrator">Administrator</option>
-                </select>
+                  autoFocus
+                />
               </div>
+            </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="reg-password">
+            <div className="form-group">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="form-label" htmlFor="login-password">
                   Password
                 </label>
-                <div className="input-wrapper">
-                  <Lock size={18} className="input-icon-left" />
-                  <input
-                    id="reg-password"
-                    type={showPassword ? 'text' : 'password'}
-                    className="form-input has-icon"
-                    placeholder="Choose password (min 4 characters)"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    className="input-btn-right"
-                    onClick={() => setShowPassword(!showPassword)}
-                    title={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
               </div>
+              <div className="input-wrapper">
+                <Lock size={18} className="input-icon-left" />
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-input has-icon"
+                  placeholder="Enter account password"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (activeError) {
+                      clearError();
+                      setValidationError(null);
+                    }
+                  }}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  className="input-btn-right"
+                  onClick={() => setShowPassword(!showPassword)}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
 
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ marginTop: '16px', height: '46px', fontSize: '0.98rem' }}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 size={18} className="spin-icon" />
-                    <span>Creating Account...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Create Account & Sign In</span>
-                    <CheckCircle2 size={17} />
-                  </>
-                )}
-              </button>
-            </form>
+            <button
+              type="submit"
+              className="btn-primary"
+              style={{ marginTop: '20px', height: '46px', fontSize: '0.98rem' }}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={18} className="spin-icon" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <>
+                  <span>Sign In to Dashboard</span>
+                  <ArrowRight size={17} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Switch to Register */}
+          {onNavigateToRegister && (
+            <div
+              style={{
+                marginTop: '28px',
+                textAlign: 'center',
+                paddingTop: '20px',
+                borderTop: '1px solid var(--border-subtle)',
+              }}
+            >
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  onClick={onNavigateToRegister}
+                  style={{
+                    color: 'var(--primary)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: 'inherit',
+                  }}
+                >
+                  Create an Account
+                </button>
+              </p>
+            </div>
           )}
 
           {/* Platform Footer */}
-          <div style={{ marginTop: '24px', textAlign: 'center' }}>
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
               Language & Audio Dataset Collection Platform
             </p>
