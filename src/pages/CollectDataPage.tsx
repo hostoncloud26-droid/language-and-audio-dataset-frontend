@@ -3,6 +3,7 @@ import { Language, Dataset, AudioItem, DatasetRecord, CollectionStep } from '../
 import { api } from '../services/api';
 import { LanguageSelector } from '../components/CollectData/LanguageSelector';
 import { TextInputArea } from '../components/CollectData/TextInputArea';
+import { RecordAudioSection } from '../components/CollectData/RecordAudioSection';
 import { AudioUploadBox } from '../components/CollectData/AudioUploadBox';
 import { AudioPreviewCard } from '../components/CollectData/AudioPreviewCard';
 import { CollectionSuccessCard } from '../components/CollectData/CollectionSuccessCard';
@@ -124,7 +125,7 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
     }
   };
 
-  // Audio Upload Flow
+  // Audio Upload Flow (Handles both live microphone recordings and file uploads)
   const handleFileUpload = async (file: File) => {
     if (!selectedLanguage) return;
 
@@ -133,16 +134,17 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
 
     try {
       const result = await api.uploadAudio(file, selectedLanguage.id);
+      const isRecorded = file.name.startsWith('recording_') || file.name.startsWith('voice_');
       setAudioItem({
         url: result.audio_url,
         filename: result.filename,
         duration: result.duration,
-        source: 'uploaded',
+        source: isRecorded ? 'recorded' : 'uploaded',
       });
       setShowUploadBox(false);
-      // Initialize Final Text with file name or existing text
-      setFinalText(text.trim() ? text : file.name.replace(/\.[^/.]+$/, ''));
-      setStepState('uploaded');
+      // Initialize Final Text with entered prompt text or clean file name
+      setFinalText(text.trim() ? text : file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' '));
+      setStepState(isRecorded ? 'recorded' : 'uploaded');
     } catch (err: any) {
       setApiError('Unable to upload audio.');
       setErrorType('upload');
@@ -209,8 +211,8 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
     setApiError(null);
   };
 
-  // Original Text is locked once audio has been generated or uploaded
-  const isOriginalLocked = !!audioItem || isGenerating || stepState === 'generated' || stepState === 'uploaded' || stepState === 'approved' || stepState === 'submitting' || stepState === 'saved';
+  // Original Text is locked once audio has been generated, recorded, or uploaded
+  const isOriginalLocked = !!audioItem || isGenerating || stepState === 'generated' || stepState === 'uploaded' || stepState === 'recorded' || stepState === 'approved' || stepState === 'submitting' || stepState === 'saved';
 
   return (
     <div className="page-content">
@@ -220,7 +222,7 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
           <div>
             <h2 className="collect-header-title">Collect Data</h2>
             <p className="collect-header-subtitle">
-              Collect, synthesize, annotate, and approve speech samples
+              Record voice audio, upload files, annotate text, and approve dataset samples
             </p>
           </div>
           <div style={{ zIndex: 2 }}>
@@ -258,7 +260,7 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
           />
         )}
 
-        {/* Section 7, 8, 9, 10, 11: Main Collection Workspace Area */}
+        {/* Main Collection Workspace Area */}
         {selectedLanguage && (
           <div className="text-audio-card">
             <div className="selected-badge-pill">
@@ -276,7 +278,7 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
               />
             ) : (
               <>
-                {/* Text input and actions (Original Text - Locked after generation) */}
+                {/* Prompt Utterance Reference Text */}
                 <TextInputArea
                   text={text}
                   onTextChange={setText}
@@ -289,17 +291,19 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
                   selectedLanguageName={selectedLanguage.name}
                 />
 
-                {/* Upload File Box Dropzone */}
-                {showUploadBox && !audioItem && (
-                  <AudioUploadBox
-                    onFileSelected={handleFileUpload}
+                {/* New Section: Record Audio & Upload Options */}
+                {!audioItem && (
+                  <RecordAudioSection
+                    selectedLanguageName={selectedLanguage.name}
+                    promptText={text}
                     isUploading={isUploading}
-                    error={apiError}
+                    onUploadAudio={handleFileUpload}
+                    disabled={isUploading}
                   />
                 )}
 
-                {/* Section 10: Audio Preview, Final Text & Approval/Submit */}
-                {audioItem && (stepState === 'generated' || stepState === 'uploaded' || stepState === 'approved' || stepState === 'submitting') && (
+                {/* Section: Audio Preview, Final Text Annotation & Approval/Submit */}
+                {audioItem && (stepState === 'generated' || stepState === 'uploaded' || stepState === 'recorded' || stepState === 'approved' || stepState === 'submitting') && (
                   <AudioPreviewCard
                     audioItem={audioItem}
                     finalText={finalText}

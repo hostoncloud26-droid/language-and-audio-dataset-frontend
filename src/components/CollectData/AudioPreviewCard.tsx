@@ -2,7 +2,7 @@ import React from 'react';
 import { AudioItem } from '../../types';
 import { useAudioPlayer } from '../../context/AudioPlayerContext';
 import { formatDuration } from '../../services/audioService';
-import { Play, Pause, RotateCcw, Check, Trash2, Sparkles, Upload, FileEdit, CheckCircle2, Send, Loader2, Download, Cloud } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Trash2, Sparkles, Upload, FileEdit, CheckCircle2, Send, Loader2, Download, Cloud, Mic } from 'lucide-react';
 
 
 interface AudioPreviewCardProps {
@@ -13,8 +13,8 @@ interface AudioPreviewCardProps {
   onApprove: () => void;
   onSubmit: () => void;
   onDiscard: () => void;
-  onRegenerate: () => void;
-  isRegenerating: boolean;
+  onRegenerate?: () => void;
+  isRegenerating?: boolean;
   isSubmitting: boolean;
 }
 
@@ -64,7 +64,11 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
       <div className="audio-preview-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span className="preview-tag">
-            {audioItem.source === 'generated' ? (
+            {audioItem.source === 'recorded' ? (
+              <>
+                <Mic size={13} /> Recorded Voice Audio
+              </>
+            ) : audioItem.source === 'generated' ? (
               <>
                 <Sparkles size={13} /> Generated Speech
               </>
@@ -175,7 +179,8 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
             <span>Final Text</span>
           </label>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* TTS Regenerate Audio */}
+            {/* TTS Regenerate Audio - Commented out per request */}
+            {/*
             <button
               type="button"
               className="btn-secondary"
@@ -209,6 +214,7 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
                 </>
               )}
             </button>
+            */}
           </div>
         </div>
         <textarea
@@ -220,7 +226,7 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
           style={{ minHeight: '90px', marginBottom: 0, background: 'white' }}
         />
         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Edit text above and click <strong>Regenerate Audio</strong> to update preview audio before approving.
+          Review the transcribed text above against your audio recording before approving.
         </div>
       </div>
 
@@ -276,10 +282,22 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
           className="btn-discard"
           onClick={onDiscard}
           disabled={isSubmitting || isRegenerating}
-          title={audioItem.source === 'generated' ? 'Discard generated audio' : 'Remove uploaded file'}
+          title={
+            audioItem.source === 'recorded'
+              ? 'Discard recorded audio'
+              : audioItem.source === 'generated'
+              ? 'Discard generated audio'
+              : 'Remove uploaded file'
+          }
         >
           <Trash2 size={16} />
-          <span>{audioItem.source === 'generated' ? 'Discard' : 'Remove'}</span>
+          <span>
+            {audioItem.source === 'recorded'
+              ? 'Discard Recording'
+              : audioItem.source === 'generated'
+              ? 'Discard'
+              : 'Remove File'}
+          </span>
         </button>
       </div>
     </div>

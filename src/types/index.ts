@@ -45,6 +45,7 @@ export type CollectionStep =
   | 'generating' 
   | 'generated' 
   | 'uploaded' 
+  | 'recorded'
   | 'approved'
   | 'submitting' 
   | 'saved';
@@ -54,7 +55,7 @@ export interface AudioItem {
   blob?: Blob;
   filename: string;
   duration: number;
-  source: 'generated' | 'uploaded';
+  source: 'generated' | 'uploaded' | 'recorded';
 }
 
 export interface AudioPlayerState {

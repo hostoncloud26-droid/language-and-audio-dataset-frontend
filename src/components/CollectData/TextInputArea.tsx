@@ -4,7 +4,7 @@ import { Sparkles, Upload, Loader2, FileText, Lock, X, Lightbulb } from 'lucide-
 interface TextInputAreaProps {
   text: string;
   onTextChange: (text: string) => void;
-  onGenerate: () => void;
+  onGenerate?: () => void;
   onUploadClick: () => void;
   onFileSelected?: (file: File) => void;
   isGenerating: boolean;
@@ -179,13 +179,14 @@ export const TextInputArea: React.FC<TextInputAreaProps> = ({
         </div>
       )}
 
-      {/* Generation Progress Indicator */}
+      {/* TTS Speech Generation Indicator (Commented out per request) */}
+      {/*
       {isGenerating && (
         <div style={{ marginBottom: '18px', padding: '12px 16px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
             <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Loader2 size={16} className="spin-icon" />
-              Synthesizing speech via OmniVoice API & uploading to server...
+              Synthesizing speech via Edge Neural TTS & uploading to server...
             </span>
           </div>
           <div className="skeleton" style={{ height: '8px', background: '#bae6fd' }}>
@@ -193,6 +194,7 @@ export const TextInputArea: React.FC<TextInputAreaProps> = ({
           </div>
         </div>
       )}
+      */}
 
       {/* Uploading to Server Progress Indicator */}
       {isUploading && (
@@ -212,13 +214,14 @@ export const TextInputArea: React.FC<TextInputAreaProps> = ({
       {/* Action Buttons Row */}
       {!isLocked && (
         <div className="action-buttons-row">
-          {/* TTS Speech Generation Button (OmniVoice / Neural TTS Engine) */}
+          {/* TTS Audio Generator Button - Commented out per request */}
+          {/*
           <button
             type="button"
             className="btn-action-generate"
             onClick={onGenerate}
             disabled={!text.trim() || isGenerating || isUploading}
-            title={!text.trim() ? 'Enter text to synthesize speech' : 'Synthesize speech from entered text with Text-to-Speech (TTS)'}
+            title={!text.trim() ? 'Enter text to synthesize speech' : 'Synthesize speech from entered text with Edge Neural TTS'}
           >
             {isGenerating ? (
               <>
@@ -232,6 +235,7 @@ export const TextInputArea: React.FC<TextInputAreaProps> = ({
               </>
             )}
           </button>
+          */}
 
           <button
             type="button"
