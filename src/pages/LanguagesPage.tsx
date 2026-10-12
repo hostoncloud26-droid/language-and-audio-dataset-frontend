@@ -17,7 +17,6 @@ export const LanguagesPage: React.FC = () => {
   // Add Language Modal State
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [newLangName, setNewLangName] = useState<string>('');
-  const [newLangCode, setNewLangCode] = useState<string>('');
   const [newLangStatus, setNewLangStatus] = useState<string>('Active');
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [modalError, setModalError] = useState<string | null>(null);
@@ -64,12 +63,12 @@ export const LanguagesPage: React.FC = () => {
     setModalError(null);
 
     try {
-      const created = await api.createLanguage(cleanName, newLangCode.trim() || undefined, newLangStatus);
+      const autoCode = cleanName.slice(0, 3).toLowerCase();
+      const created = await api.createLanguage(cleanName, autoCode, newLangStatus);
       setIsModalOpen(false);
       setNewLangName('');
-      setNewLangCode('');
       setNewLangStatus('Active');
-      showToast(`Language "${created.name}" added successfully.`);
+      showToast(`Project "${created.name}" added successfully.`);
       await fetchLanguages();
     } catch (err: any) {
       setModalError(err.message || 'Failed to add language');
@@ -287,21 +286,6 @@ export const LanguagesPage: React.FC = () => {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="lang-code">
-                    ISO Code (Optional)
-                  </label>
-                  <input
-                    id="lang-code"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. kn, fr, de"
-                    maxLength={6}
-                    value={newLangCode}
-                    onChange={(e) => setNewLangCode(e.target.value)}
-                    disabled={isSaving}
-                  />
-                </div>
 
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label className="form-label" htmlFor="lang-status">

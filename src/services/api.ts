@@ -9,7 +9,9 @@ const STORAGE_KEYS = {
 
 // FastAPI Backend URL configuration
 export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || 'http://localhost:8000';
-export const API_BASE = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8000/api';
+export const API_BASE =
+  (import.meta.env.VITE_API_URL as string) ||
+  (typeof window !== 'undefined' ? '/api' : 'http://localhost:8000/api');
 
 /**
  * Ensures audio URLs served by the FastAPI server (/media/...) are resolved to absolute backend URLs
@@ -29,6 +31,9 @@ export const INITIAL_DEMO_LANGUAGES: Language[] = [
   { id: 1, name: 'English', status: 'Active' },
   { id: 2, name: 'Tamil', status: 'Active' },
   { id: 3, name: 'Hindi', status: 'Active' },
+  { id: 4, name: 'Malayalam', status: 'Active' },
+  { id: 5, name: 'Telugu', status: 'Active' },
+  { id: 6, name: 'Marathi', status: 'Active' },
 ];
 
 export const INITIAL_DEMO_DATASETS: Dataset[] = [
@@ -295,13 +300,19 @@ export const api = {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          return data;
+          return data.map((lang: any, idx: number) => ({
+            ...lang,
+            id: typeof lang.id === 'number' && lang.id < 10000 ? lang.id : idx + 1,
+          }));
         }
       }
     } catch {
       // Fallback
     }
-    return [...INITIAL_DEMO_LANGUAGES];
+    return INITIAL_DEMO_LANGUAGES.map((lang: any, idx: number) => ({
+      ...lang,
+      id: typeof lang.id === 'number' && lang.id < 10000 ? lang.id : idx + 1,
+    }));
   },
 
   /**
@@ -322,10 +333,14 @@ export const api = {
       }
     } catch (err: any) {
       if (err.message && !err.message.includes('fetch')) throw err;
+      const maxId = INITIAL_DEMO_LANGUAGES.reduce((max, l) => {
+        const num = Number(l.id);
+        return !isNaN(num) && num < 10000 ? Math.max(max, num) : max;
+      }, 0);
       const newLang: Language = {
-        id: Date.now(),
+        id: maxId + 1,
         name,
-        code: code || name.slice(0, 3).toLowerCase(),
+        code: code && isNaN(Number(code)) ? code : name.slice(0, 3).toLowerCase(),
         status,
       };
       INITIAL_DEMO_LANGUAGES.push(newLang);

@@ -75,31 +75,24 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
             </tr>
           </thead>
           <tbody>
-            {currentLanguages.map((lang) => {
+            {currentLanguages.map((lang, index) => {
               const isActive = (lang.status || 'Active').toLowerCase() === 'active';
+              // Ensure clean sequential ID, preventing raw timestamp IDs like 1791818029590
+              const displayId =
+                typeof lang.id === 'number' && lang.id < 10000
+                  ? lang.id
+                  : !isNaN(Number(lang.id)) && Number(lang.id) < 10000
+                  ? Number(lang.id)
+                  : startIndex + index + 1;
+
               return (
                 <tr key={lang.id}>
-                  <td className="table-id-cell">{lang.id}</td>
+                  <td className="table-id-cell">{displayId}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                         {lang.name}
                       </span>
-                      {lang.code && (
-                        <span
-                          style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.72rem',
-                            padding: '1px 6px',
-                            background: '#f1f5f9',
-                            borderRadius: '4px',
-                            color: 'var(--text-muted)',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {lang.code}
-                        </span>
-                      )}
                     </div>
                   </td>
                   <td>
@@ -109,8 +102,8 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
                       className={`status-badge ${isActive ? 'active' : 'inactive'}`}
                       style={{
                         cursor: onToggleStatus ? 'pointer' : 'default',
-                        border: 'none',
-                        background: isActive ? 'var(--success-subtle)' : '#f1f5f9',
+                        border: isActive ? 'none' : '1px solid #28283a',
+                        background: isActive ? 'var(--success-subtle)' : '#181822',
                         color: isActive ? 'var(--success-text)' : 'var(--text-muted)',
                       }}
                       title={onToggleStatus ? 'Click to toggle status' : undefined}
