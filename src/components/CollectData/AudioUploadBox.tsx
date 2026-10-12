@@ -45,7 +45,7 @@ export const AudioUploadBox: React.FC<AudioUploadBoxProps> = ({
         borderRadius: 'var(--radius-lg)',
         padding: '30px 20px',
         textAlign: 'center',
-        background: '#fafafa',
+        background: '#101015',
         marginTop: '16px',
         cursor: 'pointer',
         transition: 'all 0.2s ease',

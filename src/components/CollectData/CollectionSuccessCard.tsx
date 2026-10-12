@@ -26,10 +26,10 @@ export const CollectionSuccessCard: React.FC<CollectionSuccessCardProps> = ({
           <CheckCircle2 size={26} />
         </div>
         <div>
-          <h3 className="success-title">✓ Successfully added to Dataset</h3>
+          <h3 className="success-title">✓ Recording Uploaded Successfully</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-            <span style={{ fontSize: '0.9rem', color: '#166534', fontWeight: 600 }}>
-              Dataset ID:
+            <span style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600 }}>
+              Recording ID:
             </span>
             <span className="success-id-pill">{record.id}</span>
           </div>
@@ -37,7 +37,7 @@ export const CollectionSuccessCard: React.FC<CollectionSuccessCardProps> = ({
       </div>
 
       {/* Recorded Details */}
-      <div style={{ background: 'white', padding: '18px 20px', borderRadius: '10px', border: '1px solid #bbf7d0', marginBottom: '20px' }}>
+      <div style={{ background: '#101015', padding: '18px 20px', borderRadius: '10px', border: '1px solid #22222e', marginBottom: '20px' }}>
         <p style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '4px' }}>
           Text:
         </p>
@@ -65,7 +65,7 @@ export const CollectionSuccessCard: React.FC<CollectionSuccessCardProps> = ({
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
         <button
           className="btn-primary"
-          style={{ width: 'auto', padding: '0 20px', height: '42px', background: '#15803d' }}
+          style={{ width: 'auto', padding: '0 20px', height: '42px' }}
           onClick={onCollectAnother}
         >
           <PlusCircle size={16} />
@@ -74,10 +74,10 @@ export const CollectionSuccessCard: React.FC<CollectionSuccessCardProps> = ({
 
         <button
           className="btn-secondary"
-          style={{ height: '42px', padding: '0 18px', background: 'white' }}
+          style={{ height: '42px', padding: '0 18px', background: '#14141c' }}
           onClick={onViewDatasets}
         >
-          <span>View in Datasets Table</span>
+          <span>View in Recordings Table</span>
           <ArrowRight size={16} />
         </button>
       </div>

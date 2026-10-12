@@ -193,12 +193,12 @@ export const LanguagesPage: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Language Projects
+            Projects
           </h2>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '2px' }}>
             {isAdmin
-              ? `Manage speech language corpora and project configurations (${languages.length} total)`
-              : `Active language tracks available for recording and dataset export (${languages.length} total)`}
+              ? `Manage projects and speech configurations (${languages.length} total)`
+              : `Active projects available for recording and dataset export (${languages.length} total)`}
           </p>
         </div>
 
@@ -344,7 +344,7 @@ export const LanguagesPage: React.FC = () => {
                   ) : (
                     <>
                       <Plus size={16} />
-                      <span>Add Language</span>
+                      <span>Add Project</span>
                     </>
                   )}
                 </button>

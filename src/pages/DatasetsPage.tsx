@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Dataset, DatasetRecord, Language, ContributorSummary } from '../types';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -159,6 +159,96 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
     }
   };
 
+  // Selected contributor details (when admin filters by member)
+  const selectedMember = useMemo(() => {
+    if (!selectedContributorId) return null;
+    return (
+      contributors.find(
+        (c) =>
+          String(c.id).toLowerCase() === selectedContributorId.toLowerCase() ||
+          c.username.toLowerCase() === selectedContributorId.toLowerCase() ||
+          c.name.toLowerCase() === selectedContributorId.toLowerCase()
+      ) || null
+    );
+  }, [contributors, selectedContributorId]);
+
+  // Dynamic aggregation of each member's contribution time and upload count
+  const memberContributionList = useMemo<ContributorSummary[]>(() => {
+    const map = new Map<string, ContributorSummary>();
+
+    // Seed from contributors list
+    contributors.forEach((c) => {
+      const key = String(c.id);
+      map.set(key, {
+        id: key,
+        name: c.name || c.username,
+        username: c.username || c.name,
+        role: c.role || 'Contributor',
+        total_duration: typeof c.total_duration === 'number' ? c.total_duration : 0,
+        upload_count: typeof c.upload_count === 'number' ? c.upload_count : 0,
+      });
+    });
+
+    // Also calculate real-time stats from records
+    records.forEach((r) => {
+      const uid = r.user_id ? String(r.user_id) : '';
+      const uname = r.uploaded_by || 'Unknown';
+      let foundKey: string | null = null;
+      if (uid && map.has(uid)) {
+        foundKey = uid;
+      } else {
+        for (const [k, v] of map.entries()) {
+          if (v.name.toLowerCase() === uname.toLowerCase() || v.username.toLowerCase() === uname.toLowerCase()) {
+            foundKey = k;
+            break;
+          }
+        }
+      }
+
+      if (!foundKey && (uid || uname)) {
+        const newKey = uid || uname;
+        map.set(newKey, {
+          id: newKey,
+          name: uname,
+          username: uname.toLowerCase().replace(/\s+/g, '_'),
+          role: 'Contributor',
+          total_duration: 0,
+          upload_count: 0,
+        });
+      }
+    });
+
+    // Compute exact durations from current records for consistency
+    return Array.from(map.values()).map((member) => {
+      const memberRecs = records.filter(
+        (r) =>
+          (r.user_id && String(r.user_id) === member.id) ||
+          (r.uploaded_by && r.uploaded_by.toLowerCase() === member.name.toLowerCase()) ||
+          (r.uploaded_by && r.uploaded_by.toLowerCase() === member.username.toLowerCase())
+      );
+      if (memberRecs.length > 0) {
+        const durationSum = memberRecs.reduce((acc, r) => {
+          const d = typeof r.duration === 'number' ? r.duration : parseFloat(String(r.duration || 0)) || 0;
+          return acc + d;
+        }, 0);
+        return {
+          ...member,
+          upload_count: memberRecs.length,
+          total_duration: durationSum > 0 ? durationSum : member.total_duration,
+        };
+      }
+      return member;
+    });
+  }, [contributors, records]);
+
+  // Overall platform total duration
+  const platformTotalDurationSecs = useMemo(() => {
+    return records.reduce((acc, r) => {
+      const dur = typeof r.duration === 'number' ? r.duration : parseFloat(String(r.duration || 0));
+      return acc + (isNaN(dur) ? 0 : dur);
+    }, 0);
+  }, [records]);
+
   const filteredRecords = records.filter((rec) => {
     const matchesSearch =
       !searchText ||
@@ -173,7 +263,15 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
       !selectedLanguageId || String(rec.language_id) === String(selectedLanguageId);
 
     const matchesContributor =
-      !isAdmin || !selectedContributorId || rec.user_id === selectedContributorId;
+      !isAdmin ||
+      !selectedContributorId ||
+      rec.user_id === selectedContributorId ||
+      (rec.uploaded_by && rec.uploaded_by.toLowerCase() === selectedContributorId.toLowerCase()) ||
+      (selectedMember && (
+        rec.user_id === selectedMember.id ||
+        (rec.uploaded_by && rec.uploaded_by.toLowerCase() === selectedMember.name.toLowerCase()) ||
+        (rec.uploaded_by && rec.uploaded_by.toLowerCase() === selectedMember.username.toLowerCase())
+      ));
 
     return matchesSearch && matchesDataset && matchesLanguage && matchesContributor;
   });
@@ -271,14 +369,9 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
                 </span>
               )}
             </div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {isAdmin ? 'Global Datasets & All Contributor Uploads' : 'My Uploaded Audio Recordings'}
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
+              {isAdmin ? 'All Audio Recordings' : 'My Uploaded Audio Recordings'}
             </h2>
-            <p style={{ fontSize: '0.86rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-              {isAdmin
-                ? 'Supervisory oversight: Inspect every recording uploaded by every contributor across the entire platform.'
-                : `Showing only recordings uploaded by your account (${user?.name || user?.username}). Other contributors cannot see your data.`}
-            </p>
           </div>
 
           {/* Quick Action Buttons for Administrator */}
@@ -295,100 +388,159 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
           )}
         </div>
 
-        {/* Professional Metrics Strip */}
+        {/* Professional Metrics Strip with Member Contribution Time Option */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: isAdmin ? 'repeat(auto-fit, minmax(240px, 1fr))' : 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '12px',
             marginTop: '16px',
           }}
         >
+          {/* Card 1: Audio Recordings */}
           <div
             style={{
-              background: '#ffffff',
-              padding: '14px 18px',
-              borderRadius: '10px',
+              background: 'var(--bg-surface)',
+              padding: '16px 20px',
+              borderRadius: '12px',
               border: '1px solid var(--border-subtle)',
               boxShadow: 'var(--shadow-sm)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                {isAdmin ? 'Total Utterances' : 'My Uploaded Audio'}
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {isAdmin
+                  ? selectedMember
+                    ? `${selectedMember.name} Recordings`
+                    : 'Total Audio Recordings'
+                  : 'My Uploaded Audio'}
               </span>
               <Mic size={16} color="var(--primary)" />
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
               {filteredRecords.length}{' '}
               <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-muted)' }}>recordings</span>
             </div>
+            {isAdmin && (
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                {selectedMember ? `Filtered to ${selectedMember.name}` : `Total across all members`}
+              </div>
+            )}
           </div>
 
+          {/* Card 2: Audio Duration / Contributed Time */}
           <div
             style={{
-              background: '#ffffff',
-              padding: '14px 18px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-sm)',
+              background: 'var(--bg-surface)',
+              padding: '16px 20px',
+              borderRadius: '12px',
+              border: selectedMember ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)',
+              boxShadow: selectedMember ? '0 0 12px rgba(16, 185, 129, 0.12)' : 'var(--shadow-sm)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                {isAdmin ? 'Total Audio Duration' : 'My Total Duration'}
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: selectedMember ? '#34d399' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {isAdmin
+                  ? selectedMember
+                    ? `${selectedMember.name} Contribution Time`
+                    : 'Total Audio Duration'
+                  : 'My Total Duration'}
               </span>
-              <Clock size={16} color="#0d9488" />
+              <Clock size={16} color={selectedMember ? '#10b981' : '#0d9488'} />
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
               {Math.floor(totalDurationSecs / 60)}m {Math.round(totalDurationSecs % 60)}s
             </div>
+            {isAdmin && (
+              <div style={{ fontSize: '0.75rem', color: selectedMember ? '#10b981' : 'var(--text-muted)', marginTop: '4px', fontWeight: selectedMember ? 600 : 400 }}>
+                {selectedMember ? `✓ ${selectedMember.name}'s contributed time` : `Cumulative platform audio duration`}
+              </div>
+            )}
           </div>
 
-          <div
-            style={{
-              background: '#ffffff',
-              padding: '14px 18px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                {isAdmin ? 'Active Contributors' : 'Workspace Privacy'}
-              </span>
-              {isAdmin ? <Users size={16} color="#8b5cf6" /> : <ShieldCheck size={16} color="#10b981" />}
-            </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {isAdmin ? (
-                `${contributors.length} contributors`
-              ) : (
-                <span style={{ color: '#059669', fontSize: '0.95rem' }}>Strictly Isolated</span>
-              )}
-            </div>
-          </div>
+          {/* Card 3: Member Contribution Time Selector (Admin Only) */}
+          {isAdmin && (
+            <div
+              style={{
+                background: 'var(--bg-surface)',
+                padding: '16px 20px',
+                borderRadius: '12px',
+                border: selectedContributorId ? '1px solid rgba(139, 92, 246, 0.4)' : '1px solid var(--border-subtle)',
+                boxShadow: selectedContributorId ? '0 0 15px rgba(139, 92, 246, 0.14)' : 'var(--shadow-sm)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Users size={14} color="#a855f7" />
+                    Member Contribution Time
+                  </span>
+                  {selectedContributorId && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedContributorId('')}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.72rem',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                      title="Clear selection and view all members"
+                    >
+                      <X size={11} /> Reset
+                    </button>
+                  )}
+                </div>
 
-          <div
-            style={{
-              background: '#ffffff',
-              padding: '14px 18px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-sm)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                Active Datasets
-              </span>
-              <Database size={16} color="#f59e0b" />
+                <select
+                  value={selectedContributorId}
+                  onChange={(e) => setSelectedContributorId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '38px',
+                    background: '#121217',
+                    border: '1px solid #28283a',
+                    borderRadius: '8px',
+                    color: '#ffffff',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    padding: '0 10px',
+                    cursor: 'pointer',
+                    outline: 'none',
+                  }}
+                  title="Select person to view their contribution time"
+                >
+                  <option value="">
+                    All Members ({Math.floor(platformTotalDurationSecs / 60)}m {Math.round(platformTotalDurationSecs % 60)}s total)
+                  </option>
+                  {memberContributionList.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} — {Math.floor(m.total_duration / 60)}m {Math.round(m.total_duration % 60)}s ({m.upload_count} recs)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ marginTop: '8px', fontSize: '0.75rem', color: selectedContributorId ? '#a78bfa' : 'var(--text-muted)' }}>
+                {selectedMember ? (
+                  <span>
+                    Viewing <strong>{selectedMember.name}</strong> ({Math.floor(totalDurationSecs / 60)}m {Math.round(totalDurationSecs % 60)}s)
+                  </span>
+                ) : (
+                  <span>Select any person above to view their contribution time only</span>
+                )}
+              </div>
             </div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {datasets.length}{' '}
-              <span style={{ fontSize: '0.82rem', fontWeight: 500, color: 'var(--text-muted)' }}>corpora</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -404,19 +556,11 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
         onSearchChange={setSearchText}
         onRefresh={() => loadData(true)}
         isRefreshing={isRefreshing}
-        onOpenCreateModal={
-          isAdmin
-            ? () => {
-                setIsModalOpen(true);
-                setModalError(null);
-              }
-            : undefined
-        }
         onExportData={handleExportData}
         isExporting={isExporting}
         exportProgressText={exportProgressText}
         isAdmin={isAdmin}
-        contributors={contributors}
+        contributors={memberContributionList}
         selectedContributorId={selectedContributorId}
         onSelectContributor={setSelectedContributorId}
       />
@@ -466,8 +610,8 @@ export const DatasetsPage: React.FC<DatasetsPageProps> = ({ onNavigateToCollect 
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '12px 14px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      background: 'var(--bg-surface)',
+                      border: '1px solid var(--border-subtle)',
                       borderRadius: '8px',
                     }}
                   >

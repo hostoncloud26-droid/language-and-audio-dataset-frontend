@@ -2,20 +2,14 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Mic,
-  Lock,
-  User as UserIcon,
   Eye,
   EyeOff,
   Loader2,
   AlertCircle,
-  Volume2,
-  ShieldCheck,
   ArrowRight,
-  UserPlus,
-  LogIn,
-  Mail,
-  Sparkles,
 } from 'lucide-react';
+
+import { AuthLoadingScreen } from '../components/common/AuthLoadingScreen';
 
 interface RegisterPageProps {
   onNavigateToLogin: () => void;
@@ -32,6 +26,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +42,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
       return;
     }
     if (!cleanUser || !cleanUser.includes('@') || !cleanUser.includes('.')) {
-      setValidationError('Please enter a valid work or personal email address.');
+      setValidationError('Please enter a valid email address.');
       return;
     }
     if (cleanPass.length < 4) {
@@ -59,305 +54,200 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
       return;
     }
 
+    setIsAuthenticating(true);
+
     try {
-      await register(cleanUser, cleanPass, cleanName);
+      await Promise.all([
+        register(cleanUser, cleanPass, cleanName),
+        new Promise((resolve) => setTimeout(resolve, 1450)),
+      ]);
     } catch {
-      // Error handled in AuthContext
+      setIsAuthenticating(false);
     }
   };
 
   const activeError = validationError || error;
 
+  if (isAuthenticating) {
+    return <AuthLoadingScreen isAdmin={false} />;
+  }
+
   return (
     <div className="login-container">
-      <div className="login-split-card">
-        {/* Left Hero Pane */}
-        <div className="login-hero-pane">
-          <div>
-            <div className="hero-brand">
-              <div className="hero-brand-icon">
-                <Mic size={24} />
-              </div>
-              <div>
-                <span className="hero-brand-name">Dataset Platform</span>
-                <span
-                  style={{
-                    display: 'block',
-                    fontSize: '0.72rem',
-                    color: '#93c5fd',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                    fontWeight: 700,
-                  }}
-                >
-                  Acoustic Intelligence
-                </span>
-              </div>
+      <div className="login-card-centered">
+        {/* Top loading bar */}
+        {isLoading && <div className="login-card-loader-bar" />}
+
+        {/* Clean Header */}
+        <div className="login-header-clean">
+          <div className="login-brand-clean">
+            <div className="login-logo-clean">
+              <Mic size={20} />
             </div>
-
-            <div className="hero-content">
-              <h1 className="hero-title">
-                Create Your <span className="hero-title-highlight">Account</span>
-              </h1>
-              <p className="hero-desc">
-                Instant access to acoustic datasets, voice synthesis, and multilingual speech annotations.
-              </p>
-
-              {/* Animated Soundwave Visual */}
-              <div className="hero-soundwave">
-                {[14, 26, 34, 18, 30, 22, 12, 28, 36, 20, 16, 32, 24, 14, 30, 26, 18, 22, 34, 16].map((h, i) => (
-                  <div
-                    key={i}
-                    className="hero-wave-bar"
-                    style={{
-                      height: `${h}px`,
-                      animationDelay: `${(i * 0.07).toFixed(2)}s`,
-                      opacity: 0.6 + (i % 4) * 0.1,
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Feature Highlights */}
-              <div className="hero-features-list">
-                <div className="hero-feature-item">
-                  <div className="hero-feature-icon">
-                    <Sparkles size={15} color="#38bdf8" />
-                  </div>
-                  <span>Instant access to audio collection and annotation tools</span>
-                </div>
-                <div className="hero-feature-item">
-                  <div className="hero-feature-icon">
-                    <Volume2 size={15} color="#a7f3d0" />
-                  </div>
-                  <span>Neural Text-to-Speech synthesis with voice preview</span>
-                </div>
-                <div className="hero-feature-item">
-                  <div className="hero-feature-icon">
-                    <ShieldCheck size={15} color="#fcd34d" />
-                  </div>
-                  <span>PostgreSQL persistence & JWT signed authentication</span>
-                </div>
-              </div>
+            <div>
+              <h1 className="login-title-clean">Allo Audio Dataset</h1>
             </div>
           </div>
-
-          <div className="hero-footer" style={{ justifyContent: 'space-between' }}>
-            <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
-              Already registered?
-            </span>
-            <button
-              type="button"
-              onClick={onNavigateToLogin}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: '0.84rem',
-                background: 'rgba(255, 255, 255, 0.15)',
-                padding: '6px 14px',
-                borderRadius: '8px',
-                transition: 'background 0.2s',
-              }}
-            >
-              <LogIn size={14} />
-              <span>Sign In</span>
-            </button>
-          </div>
+          <p className="login-subtitle-clean">
+            Create an account to contribute speech recordings.
+          </p>
         </div>
 
-        {/* Right Form Pane */}
-        <div className="login-form-pane">
-          <div style={{ marginBottom: '20px' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                color: 'var(--primary)',
-                background: 'var(--primary-subtle)',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                marginBottom: '8px',
+        {/* Error Alert */}
+        {activeError && (
+          <div className="error-alert" style={{ marginBottom: '18px' }}>
+            <AlertCircle size={17} style={{ flexShrink: 0 }} />
+            <div style={{ flex: 1, fontSize: '0.86rem' }}>{activeError}</div>
+            <button
+              type="button"
+              onClick={() => {
+                clearError();
+                setValidationError(null);
               }}
+              style={{
+                color: 'inherit',
+                padding: '0 4px',
+                fontSize: '1.1rem',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+              title="Dismiss"
             >
-              <UserPlus size={14} />
-              <span>Account Registration</span>
-            </div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              Create Your Account
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-              Enter your details to create an account and access the dataset platform.
-            </p>
+              ×
+            </button>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="form-group-clean">
+            <label className="form-label-clean" htmlFor="register-name">
+              Full Name *
+            </label>
+            <input
+              id="register-name"
+              type="text"
+              className="form-input-clean"
+              placeholder="e.g. Alex Johnson"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (activeError) setValidationError(null);
+              }}
+              disabled={isLoading}
+              autoFocus
+            />
           </div>
 
-          {/* Error Alert */}
-          {activeError && (
-            <div className="error-alert">
-              <AlertCircle size={18} style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>{activeError}</div>
-              <button
-                type="button"
-                onClick={() => {
-                  clearError();
-                  setValidationError(null);
-                }}
-                style={{ color: 'inherit', padding: '2px 4px', fontSize: '1.1rem', lineHeight: 1 }}
-                title="Dismiss"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="register-name">
-                Full Name *
-              </label>
-              <div className="input-wrapper">
-                <UserIcon size={18} className="input-icon-left" />
-                <input
-                  id="register-name"
-                  type="text"
-                  className="form-input has-icon"
-                  placeholder="e.g. Alex Johnson"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (activeError) setValidationError(null);
-                  }}
-                  disabled={isLoading}
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="register-username">
-                Email Address *
-              </label>
-              <div className="input-wrapper">
-                <Mail size={18} className="input-icon-left" />
-                <input
-                  id="register-username"
-                  type="email"
-                  className="form-input has-icon"
-                  placeholder="e.g. alex@example.com"
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    if (activeError) setValidationError(null);
-                  }}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="register-password">
-                Password * (min 4 characters)
-              </label>
-              <div className="input-wrapper">
-                <Lock size={18} className="input-icon-left" />
-                <input
-                  id="register-password"
-                  type={showPassword ? 'text' : 'password'}
-                  className="form-input has-icon"
-                  placeholder="Create your password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (activeError) setValidationError(null);
-                  }}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="input-btn-right"
-                  onClick={() => setShowPassword(!showPassword)}
-                  title={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="register-confirm-password">
-                Confirm Password *
-              </label>
-              <div className="input-wrapper">
-                <Lock size={18} className="input-icon-left" />
-                <input
-                  id="register-confirm-password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  className="form-input has-icon"
-                  placeholder="Re-enter password to confirm"
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (activeError) setValidationError(null);
-                  }}
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  className="input-btn-right"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  title={showConfirmPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="btn-primary"
-              style={{ marginTop: '16px', height: '46px', fontSize: '0.98rem' }}
+          <div className="form-group-clean">
+            <label className="form-label-clean" htmlFor="register-username">
+              Email Address *
+            </label>
+            <input
+              id="register-username"
+              type="email"
+              className="form-input-clean"
+              placeholder="e.g. alex@example.com"
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                if (activeError) setValidationError(null);
+              }}
               disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 size={18} className="spin-icon" />
-                  <span>Creating Account...</span>
-                </>
-              ) : (
-                <>
-                  <span>Create Account</span>
-                  <ArrowRight size={18} />
-                </>
-              )}
-            </button>
-          </form>
+            />
+          </div>
 
-          {/* Switch to Login Link */}
-          <div style={{ marginTop: '20px', textAlign: 'center', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
-            <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-              Already have an account?{' '}
+          <div className="form-group-clean">
+            <label className="form-label-clean" htmlFor="register-password">
+              Password *
+            </label>
+            <div className="input-wrapper">
+              <input
+                id="register-password"
+                type={showPassword ? 'text' : 'password'}
+                className="form-input-clean"
+                style={{ paddingRight: '40px' }}
+                placeholder="Create password (min 4 characters)"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (activeError) setValidationError(null);
+                }}
+                disabled={isLoading}
+              />
               <button
                 type="button"
-                onClick={onNavigateToLogin}
-                style={{
-                  color: 'var(--primary)',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  fontSize: 'inherit',
-                }}
+                className="input-btn-right"
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? 'Hide password' : 'Show password'}
+                style={{ right: '10px' }}
               >
-                Sign In here
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
-            </p>
+            </div>
+          </div>
+
+          <div className="form-group-clean">
+            <label className="form-label-clean" htmlFor="register-confirm-password">
+              Confirm Password *
+            </label>
+            <div className="input-wrapper">
+              <input
+                id="register-confirm-password"
+                type={showConfirmPassword ? 'text' : 'password'}
+                className="form-input-clean"
+                style={{ paddingRight: '40px' }}
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (activeError) setValidationError(null);
+                }}
+                disabled={isLoading}
+              />
+              <button
+                type="button"
+                className="input-btn-right"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                style={{ right: '10px' }}
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="btn-purple-apple"
+            style={{ marginTop: '16px' }}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={16} className="spin-icon" />
+                <span>Creating Account...</span>
+              </>
+            ) : (
+              <>
+                <span>Create Account</span>
+                <ArrowRight size={15} />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Switch to Login Link */}
+        <div className="login-footer-links">
+          <div className="login-footer-text">
+            Already have an account?{' '}
+            <button
+              type="button"
+              className="login-link-btn"
+              onClick={onNavigateToLogin}
+            >
+              Login
+            </button>
           </div>
         </div>
       </div>

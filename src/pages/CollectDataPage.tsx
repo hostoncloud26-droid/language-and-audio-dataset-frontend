@@ -127,28 +127,45 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
     }
   };
 
-  // Audio Upload Flow (Handles both live microphone recordings and file uploads)
+  // Audio Upload Flow (Direct 2-click upload: Upload -> Confirm -> Directly Saved to Dataset)
   const handleFileUpload = async (file: File) => {
     if (!selectedLanguage) return;
 
     setIsUploading(true);
     setApiError(null);
 
+    // Target dataset based on language or default first dataset
+    const targetDataset =
+      datasets.find((d) => String(d.language_id) === String(selectedLanguage.id)) ||
+      datasets[0] || { id: 'DS-001' };
+
     try {
       const result = await api.uploadAudio(file, selectedLanguage.id);
       const isRecorded = file.name.startsWith('recording_') || file.name.startsWith('voice_');
-      setAudioItem({
-        url: result.audio_url,
-        filename: result.filename,
+
+      const recordText = text.trim()
+        ? text.trim()
+        : isRecorded
+        ? `Speech recording (${selectedLanguage.name})`
+        : file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ');
+
+      // Save directly to dataset in 1 shot — exactly 2 clicks total
+      const response = await api.saveRecordToDataset(targetDataset.id, {
+        text: recordText,
+        audio_url: result.audio_url,
+        language_id: selectedLanguage.id,
+        language_name: selectedLanguage.name,
         duration: result.duration,
-        source: isRecorded ? 'recorded' : 'uploaded',
+        user_id: user?.id,
+        uploaded_by: user?.name || user?.username || 'Contributor',
       });
+
+      setSavedRecord(response.record);
       setShowUploadBox(false);
-      // Initialize Final Text with entered prompt text or clean file name
-      setFinalText(text.trim() ? text : file.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' '));
-      setStepState(isRecorded ? 'recorded' : 'uploaded');
+      setStepState('saved');
     } catch (err: any) {
-      setApiError('Unable to upload audio.');
+      console.error('Error during upload & direct save:', err);
+      setApiError('Unable to upload and save audio recording to project.');
       setErrorType('upload');
       setStepState('empty');
     } finally {
@@ -226,17 +243,12 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
           <div>
             <h2 className="collect-header-title">Collect Data</h2>
             <p className="collect-header-subtitle">
-              Record voice audio, upload files, annotate text, and approve dataset samples
+              Record voice audio, upload files, and contribute speech datasets
             </p>
-          </div>
-          <div style={{ zIndex: 2 }}>
-            <span style={{ background: 'rgba(255,255,255,0.2)', padding: '6px 14px', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 600 }}>
-              End-to-End Collection Flow
-            </span>
           </div>
         </div>
 
-        {/* Section 6: Language Selection */}
+        {/* Project Selection */}
         <LanguageSelector
           languages={languages}
           selectedLanguageId={selectedLanguageId}
@@ -269,7 +281,7 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
           <div className="text-audio-card">
             <div className="selected-badge-pill">
               <Mic size={15} />
-              <span>Selected Language: {selectedLanguage.name}</span>
+              <span>Selected Project: {selectedLanguage.name}</span>
             </div>
 
             {/* Saved State Result */}
@@ -306,19 +318,18 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
                   />
                 )}
 
-                {/* Section: Audio Preview, Final Text Annotation & Approval/Submit */}
+                {/* Section: Audio Preview, Final Text Annotation & Direct Submit */}
                 {audioItem && (stepState === 'generated' || stepState === 'uploaded' || stepState === 'recorded' || stepState === 'approved' || stepState === 'submitting') && (
                   <AudioPreviewCard
                     audioItem={audioItem}
                     finalText={finalText}
                     onFinalTextChange={handleFinalTextChange}
-                    isApproved={stepState === 'approved' || stepState === 'submitting'}
-                    onApprove={handleApprove}
                     onSubmit={handleSubmitToDataset}
                     onDiscard={handleDiscard}
                     onRegenerate={handleRegenerateAudio}
                     isRegenerating={isRegenerating}
                     isSubmitting={isSubmitting}
+                    projectName={selectedLanguage.name}
                   />
                 )}
               </>

@@ -6,7 +6,6 @@ import {
   Play,
   Pause,
   Loader2,
-  ExternalLink,
   Copy,
   Check,
   Download,
@@ -243,16 +242,17 @@ export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, 
                   alignItems: 'center',
                   gap: '4px',
                   fontSize: '0.72rem',
-                  color: copied ? '#059669' : 'var(--text-muted)',
-                  background: copied ? '#ecfdf5' : 'transparent',
-                  padding: '1px 6px',
+                  color: copied ? '#34d399' : 'var(--text-muted)',
+                  background: copied ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
+                  padding: '2px 7px',
                   borderRadius: '4px',
-                  border: copied ? '1px solid #a7f3d0' : 'none',
+                  border: copied ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid transparent',
                   cursor: 'pointer',
+                  transition: 'all 0.15s ease',
                 }}
                 title="Copy transcript to clipboard"
               >
-                {copied ? <Check size={11} color="#059669" /> : <Copy size={11} />}
+                {copied ? <Check size={11} color="#34d399" /> : <Copy size={11} />}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
             </div>
@@ -295,64 +295,69 @@ export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, 
         </td>
       )}
 
-      {/* 3. Type Column (Audio Format & Storage Source) */}
-      <td>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              color: '#0369a1',
-              background: '#e0f2fe',
-              padding: '2px 8px',
-              borderRadius: '6px',
-              fontFamily: 'var(--font-mono)',
-              letterSpacing: '0.04em',
-            }}
-          >
-            <FileAudio size={12} />
-            {fileType}
-          </span>
-          {isServerAudio ? (
+      {/* 3. Type Column (Audio Format & Storage Source) - Admin Only */}
+      {isAdmin && (
+        <td>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
             <span
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '3px',
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                color: '#0d9488',
-                background: '#ccfbf1',
-                padding: '1px 6px',
-                borderRadius: '4px',
+                gap: '4px',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                color: '#c4b5fd',
+                background: 'rgba(139, 92, 246, 0.15)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                fontFamily: 'var(--font-mono)',
+                letterSpacing: '0.04em',
               }}
-              title="Stored remotely in Chibisafe cloud storage"
             >
-              <Cloud size={10} /> Cloud
+              <FileAudio size={12} />
+              {fileType}
             </span>
-          ) : (
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '3px',
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                color: '#6366f1',
-                background: '#eef2ff',
-                padding: '1px 6px',
-                borderRadius: '4px',
-              }}
-              title="Synthesized audio sample"
-            >
-              <Sparkles size={10} /> Synth
-            </span>
-          )}
-        </div>
-      </td>
+            {isServerAudio ? (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  fontSize: '0.68rem',
+                  fontWeight: 600,
+                  color: '#6ee7b7',
+                  background: 'rgba(16, 185, 129, 0.12)',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                }}
+                title="Stored remotely in cloud storage"
+              >
+                <Cloud size={10} /> Cloud
+              </span>
+            ) : (
+              <span
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  fontSize: '0.68rem',
+                  fontWeight: 600,
+                  color: '#d8b4fe',
+                  background: 'rgba(168, 85, 247, 0.12)',
+                  border: '1px solid rgba(168, 85, 247, 0.25)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                }}
+                title="Synthesized audio sample"
+              >
+                <Sparkles size={10} /> Synth
+              </span>
+            )}
+          </div>
+        </td>
+      )}
 
       {/* 4. Upload Time Column */}
       <td>
@@ -403,20 +408,19 @@ export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, 
       {/* 6. Download Button & Actions Column */}
       <td style={{ textAlign: 'right' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-          {/* Prominent Direct Download Button */}
+          {/* Download Icon Button */}
           <button
             type="button"
             onClick={handleDownload}
             disabled={isDownloading}
-            className="btn-download-action"
+            className="btn-icon-subtle"
             title={`Download ${record.id} (${fileType})`}
           >
             {isDownloading ? (
-              <Loader2 size={13} className="spin-icon" />
+              <Loader2 size={14} className="spin-icon" />
             ) : (
-              <Download size={13} />
+              <Download size={14} />
             )}
-            <span>Download</span>
           </button>
 
           {onUpdateRecord && !isEditing && (
@@ -432,16 +436,6 @@ export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, 
               <Pencil size={14} />
             </button>
           )}
-
-          <a
-            href={record.audio_url}
-            target="_blank"
-            rel="noreferrer"
-            className="btn-icon-subtle"
-            title="Open direct audio URL"
-          >
-            <ExternalLink size={14} />
-          </a>
 
           {onDeleteRecord && (
             <button

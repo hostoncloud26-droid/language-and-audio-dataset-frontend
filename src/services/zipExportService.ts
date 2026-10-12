@@ -115,6 +115,8 @@ export async function exportDatasetAsZip(
       dataset_id: rec.dataset_id || datasetId || 'DS-001',
       text: rec.text,
       audio_file: audioZipPath,
+      project_id: rec.language_id,
+      project_name: rec.language_name || 'Unknown',
       language_id: rec.language_id,
       language_name: rec.language_name || 'Unknown',
       duration: Number(durationNum.toFixed(2)),
@@ -142,7 +144,7 @@ export async function exportDatasetAsZip(
 
   // 1. Write metadata.json
   const metadataJson = {
-    platform: 'Language & Audio Dataset Platform',
+    platform: 'Allo Dataset Platform',
     dataset_id: datasetId || 'All',
     dataset_name: datasetName || 'Multi-Speaker Audio Dataset',
     language_filter: languageFilter || 'All',
@@ -160,12 +162,12 @@ export async function exportDatasetAsZip(
   // 3. Write README.txt
   const dateStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
   const readmeContent = `======================================================================
-LANGUAGE & AUDIO DATASET ARCHIVE
+ALLO AUDIO DATASET ARCHIVE
 ======================================================================
 Generated: ${dateStr} UTC
 Dataset ID: ${datasetId || 'All'}
 Dataset Name: ${datasetName || 'All Datasets'}
-Language Filter: ${languageFilter || 'All'}
+Project Filter: ${languageFilter || 'All'}
 Total Audio Files: ${records.length}
 Total Duration: ${totalDuration.toFixed(2)} seconds
 
@@ -201,7 +203,7 @@ This archive follows the standard structure for machine learning and speech:
 - ESPnet / Kaldi / SpeechBrain
 - Coqui TTS / Tacotron2 / VITS
 
-Exported by Language & Audio Dataset Platform. All rights reserved.
+Exported by Allo Dataset Platform. All rights reserved.
 ======================================================================
 `;
   zip.file('README.txt', readmeContent);

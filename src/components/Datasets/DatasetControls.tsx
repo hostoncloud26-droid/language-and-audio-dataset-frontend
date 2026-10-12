@@ -1,11 +1,8 @@
 import React from 'react';
-import { Dataset, Language, ContributorSummary } from '../../types';
-import { Search, RefreshCw, Filter, Layers, Plus, Download, Loader2, Users } from 'lucide-react';
+import { Language, ContributorSummary } from '../../types';
+import { Search, RefreshCw, FolderKanban, Download, Loader2, Users } from 'lucide-react';
 
 interface DatasetControlsProps {
-  datasets: Dataset[];
-  selectedDatasetId: string;
-  onSelectDataset: (datasetId: string) => void;
   languages: Language[];
   selectedLanguageId: string;
   onSelectLanguage: (langId: string) => void;
@@ -13,7 +10,6 @@ interface DatasetControlsProps {
   onSearchChange: (text: string) => void;
   onRefresh: () => void;
   isRefreshing: boolean;
-  onOpenCreateModal?: () => void;
   onExportData?: () => void;
   isExporting?: boolean;
   exportProgressText?: string;
@@ -21,12 +17,13 @@ interface DatasetControlsProps {
   contributors?: ContributorSummary[];
   selectedContributorId?: string;
   onSelectContributor?: (contribId: string) => void;
+  datasets?: any[];
+  selectedDatasetId?: string;
+  onSelectDataset?: (id: string) => void;
+  onOpenCreateModal?: () => void;
 }
 
 export const DatasetControls: React.FC<DatasetControlsProps> = ({
-  datasets,
-  selectedDatasetId,
-  onSelectDataset,
   languages,
   selectedLanguageId,
   onSelectLanguage,
@@ -34,7 +31,6 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
   onSearchChange,
   onRefresh,
   isRefreshing,
-  onOpenCreateModal,
   onExportData,
   isExporting = false,
   exportProgressText = '',
@@ -56,7 +52,6 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
               onChange={(e) => onSelectContributor(e.target.value)}
               style={{
                 borderColor: selectedContributorId ? 'var(--primary)' : undefined,
-                background: selectedContributorId ? '#f0f9ff' : undefined,
                 fontWeight: 600,
               }}
               title="Filter uploads by contributor"
@@ -64,39 +59,22 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
               <option value="">All Contributors (Global View)</option>
               {contributors.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name || c.username} ({c.upload_count} uploads)
+                  {c.name || c.username} — {Math.floor((c.total_duration || 0) / 60)}m {Math.round((c.total_duration || 0) % 60)}s ({c.upload_count} uploads)
                 </option>
               ))}
             </select>
           </div>
         )}
 
-        {/* Dataset Selector */}
+        {/* Project Filter */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Layers size={18} color="var(--primary)" />
-          <select
-            className="dataset-select"
-            value={selectedDatasetId}
-            onChange={(e) => onSelectDataset(e.target.value)}
-          >
-            <option value="">All Datasets ({datasets.length})</option>
-            {datasets.map((ds) => (
-              <option key={ds.id} value={ds.id}>
-                {ds.name} ({ds.record_count || 0} samples)
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Language Filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Filter size={18} color="var(--text-muted)" />
+          <FolderKanban size={18} color="var(--primary)" />
           <select
             className="dataset-select"
             value={selectedLanguageId}
             onChange={(e) => onSelectLanguage(e.target.value)}
           >
-            <option value="">All Languages</option>
+            <option value="">All Projects</option>
             {languages.map((lang) => (
               <option key={lang.id} value={String(lang.id)}>
                 {lang.name}
@@ -147,24 +125,11 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
           className="btn-secondary"
           onClick={onRefresh}
           disabled={isRefreshing}
-          title="Refresh dataset from backend"
+          title="Refresh recordings from backend"
         >
           <RefreshCw size={15} className={isRefreshing ? 'spin-icon' : ''} />
           <span>Refresh</span>
         </button>
-
-        {isAdmin && onOpenCreateModal && (
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={onOpenCreateModal}
-            style={{ height: '38px', padding: '0 16px', fontSize: '0.85rem' }}
-            title="Create a new dataset"
-          >
-            <Plus size={16} />
-            <span>New Dataset</span>
-          </button>
-        )}
       </div>
     </div>
   );

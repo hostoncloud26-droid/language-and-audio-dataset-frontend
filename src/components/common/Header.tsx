@@ -17,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ pageTitle }) => {
             {isAdmin ? <ShieldCheck size={18} /> : <UserCheck size={18} />}
           </div>
           <span className="header-project-name">
-            {isAdmin ? 'Dataset Management • Admin Portal' : 'Language & Audio Dataset Platform'}
+            {isAdmin ? 'Allo Audio Dataset • Admin' : 'Allo Audio Dataset'}
           </span>
         </div>
         <span className="header-divider">/</span>
@@ -33,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({ pageTitle }) => {
             <div className="user-details">
               <span className="user-name">{user.name || user.username}</span>
               <span className={`user-role-badge ${isAdmin ? 'role-admin' : 'role-contributor'}`}>
-                {isAdmin ? '🛡️ Administrator' : '👤 Verified Contributor'}
+                {isAdmin ? 'Administrator' : 'Contributor'}
               </span>
             </div>
           </div>

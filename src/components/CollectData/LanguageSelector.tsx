@@ -19,7 +19,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     <div className="language-picker-card">
       <div className="section-label">
         <Globe size={18} color="var(--primary)" />
-        <span>Language</span>
+        <span>Project</span>
       </div>
 
       <select
@@ -28,7 +28,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         onChange={(e) => onSelectLanguage(e.target.value)}
         disabled={isLoading}
       >
-        <option value="">Select Language ▼</option>
+        <option value="">Select Project ▼</option>
         {languages.map((lang) => (
           <option key={lang.id} value={lang.id}>
             {lang.name}

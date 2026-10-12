@@ -16,7 +16,7 @@ export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, columns 
               style={{ 
                 flex: cIdx === 1 ? 2 : 1, 
                 height: '18px', 
-                background: '#e2e8f0', 
+                background: 'rgba(255, 255, 255, 0.06)', 
                 borderRadius: '4px' 
               }} 
             />

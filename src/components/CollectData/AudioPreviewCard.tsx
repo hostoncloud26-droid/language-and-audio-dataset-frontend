@@ -1,35 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AudioItem } from '../../types';
 import { useAudioPlayer } from '../../context/AudioPlayerContext';
 import { formatDuration } from '../../services/audioService';
-import { Play, Pause, RotateCcw, Check, Trash2, Sparkles, Upload, FileEdit, CheckCircle2, Send, Loader2, Download, Cloud, Mic } from 'lucide-react';
-
+import { Play, Pause, RotateCcw, Trash2, Sparkles, Upload, FileEdit, Send, Loader2, Download, Cloud, Mic } from 'lucide-react';
 
 interface AudioPreviewCardProps {
   audioItem: AudioItem;
   finalText: string;
   onFinalTextChange: (text: string) => void;
-  isApproved: boolean;
-  onApprove: () => void;
   onSubmit: () => void;
   onDiscard: () => void;
   onRegenerate?: () => void;
   isRegenerating?: boolean;
   isSubmitting: boolean;
+  projectName?: string;
 }
 
 export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
   audioItem,
   finalText,
   onFinalTextChange,
-  isApproved,
-  onApprove,
   onSubmit,
   onDiscard,
-  onRegenerate,
   isRegenerating,
   isSubmitting,
+  projectName,
 }) => {
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const {
     currentTrackId,
     isPlaying,
@@ -59,6 +56,11 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
     seekTo(clickX / width);
   };
 
+  const handleConfirmSubmit = () => {
+    setShowConfirmModal(false);
+    onSubmit();
+  };
+
   return (
     <div className="audio-preview-box">
       <div className="audio-preview-header">
@@ -86,12 +88,13 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
                 gap: '4px',
                 fontSize: '0.74rem',
                 fontWeight: 600,
-                color: '#0284c7',
-                background: '#e0f2fe',
+                color: '#6ee7b7',
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
                 padding: '2px 8px',
                 borderRadius: '4px',
               }}
-              title="Stored in remote Chibisafe cloud server"
+              title="Stored in cloud server"
             >
               <Cloud size={11} /> Cloud Server
             </span>
@@ -171,111 +174,49 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
         </div>
       </div>
 
-      {/* Step 3 & 4: Separate Editable Final Text Box & Regenerate Control */}
+      {/* Editable Speech Text Review */}
       <div style={{ marginTop: '20px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
           <label className="form-label" style={{ fontSize: '0.92rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 0 }}>
             <FileEdit size={16} color="var(--primary)" />
-            <span>Final Text</span>
+            <span>Speech Transcript</span>
           </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* TTS Regenerate Audio - Commented out per request */}
-            {/*
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={onRegenerate}
-              disabled={!finalText.trim() || isRegenerating || isSubmitting}
-              style={{
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                height: '32px',
-                padding: '0 12px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: '#f0f9ff',
-                color: '#0284c7',
-                border: '1px solid #bae6fd',
-                borderRadius: '6px',
-                cursor: (!finalText.trim() || isRegenerating || isSubmitting) ? 'not-allowed' : 'pointer'
-              }}
-              title="Regenerate speech audio using the updated Final Text (TTS)"
-            >
-              {isRegenerating ? (
-                <>
-                  <Loader2 size={14} className="spin-icon" />
-                  <span>Regenerating (TTS)...</span>
-                </>
-              ) : (
-                <>
-                  <RotateCcw size={14} />
-                  <span>Regenerate (TTS)</span>
-                </>
-              )}
-            </button>
-            */}
-          </div>
         </div>
         <textarea
           className="textarea-custom"
-          placeholder="Edit final text if needed after listening to audio..."
+          placeholder="Edit spoken text if needed before submitting..."
           value={finalText}
           onChange={(e) => onFinalTextChange(e.target.value)}
           disabled={isSubmitting || isRegenerating}
-          style={{ minHeight: '90px', marginBottom: 0, background: 'white' }}
+          style={{ minHeight: '90px', marginBottom: 0, background: '#121217' }}
         />
         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Review the transcribed text above against your audio recording before approving.
+          Review the transcribed text above against your audio recording before submitting.
         </div>
       </div>
 
-      {/* Step 4: Approved Notice Banner */}
-      {isApproved && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '8px', marginBottom: '20px' }}>
-          <CheckCircle2 size={18} color="#059669" />
-          <div style={{ fontSize: '0.88rem', color: '#065f46' }}>
-            <strong>✓ Audio Approved</strong> — Review the audio and final text before submitting to dataset.
-          </div>
-        </div>
-      )}
-
-      {/* Action Buttons */}
+      {/* Action Buttons: Direct Submit with Confirmation */}
       <div className="preview-actions-bar">
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
-          {/* Approve Button (Marks as approved, does NOT save) */}
-          {!isApproved ? (
-            <button
-              className="btn-approve"
-              onClick={onApprove}
-              disabled={isSubmitting || isRegenerating}
-              title="Approve audio and final text"
-            >
-              <Check size={18} />
-              <span>Approve</span>
-            </button>
-          ) : (
-            /* Submit to Dataset Button (The ONLY action that saves to dataset) */
-            <button
-              className="btn-primary"
-              onClick={onSubmit}
-              disabled={isSubmitting || !finalText.trim() || isRegenerating}
-              style={{ width: 'auto', padding: '0 24px', height: '44px', background: '#0284c7' }}
-              title="Save this record to the dataset"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={18} className="spin-icon" />
-                  <span>Submitting to Dataset...</span>
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  <span>Submit to Dataset</span>
-                </>
-              )}
-            </button>
-          )}
+          <button
+            className="btn-primary"
+            onClick={() => setShowConfirmModal(true)}
+            disabled={isSubmitting || !finalText.trim() || isRegenerating}
+            style={{ width: 'auto', padding: '0 24px', height: '44px' }}
+            title="Click to submit recording"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 size={18} className="spin-icon" />
+                <span>Uploading Recording...</span>
+              </>
+            ) : (
+              <>
+                <Send size={16} />
+                <span>Submit Recording</span>
+              </>
+            )}
+          </button>
         </div>
 
         <button
@@ -300,6 +241,59 @@ export const AudioPreviewCard: React.FC<AudioPreviewCardProps> = ({
           </span>
         </button>
       </div>
+
+      {/* Confirmation Modal: Asks for confirmation then direct upload */}
+      {showConfirmModal && (
+        <div className="modal-overlay" onClick={() => !isSubmitting && setShowConfirmModal(false)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div style={{ textAlign: 'center', padding: '8px 0 16px 0' }}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'rgba(139, 92, 246, 0.15)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px auto',
+                  color: 'var(--primary)',
+                }}
+              >
+                <Upload size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                Confirm Direct Upload
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
+                Are you sure you want to upload this audio recording to project {projectName ? <strong>"{projectName}"</strong> : 'this project'}?
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={isSubmitting}
+                  style={{ minWidth: '100px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleConfirmSubmit}
+                  disabled={isSubmitting}
+                  style={{ minWidth: '150px', gap: '6px' }}
+                >
+                  <Send size={15} />
+                  <span>Confirm & Upload</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

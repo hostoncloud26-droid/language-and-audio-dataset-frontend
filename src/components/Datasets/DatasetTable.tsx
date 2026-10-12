@@ -88,21 +88,21 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
                   </span>
                 </th>
               )}
-              <th style={{ width: '10%' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <FileAudio size={14} /> Type
-                </span>
-              </th>
-              <th style={{ width: '15%' }}>
+              {isAdmin && (
+                <th style={{ width: '10%' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <FileAudio size={14} /> Type
+                  </span>
+                </th>
+              )}
+              <th style={{ width: isAdmin ? '14%' : '18%' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <Clock size={14} /> Upload Time
                 </span>
               </th>
-              <th style={{ width: '17%' }}>Audio Preview</th>
-              <th style={{ width: '14%', textAlign: 'right' }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <Download size={14} /> Download & Actions
-                </span>
+              <th style={{ width: isAdmin ? '18%' : '24%' }}>Audio Preview</th>
+              <th style={{ width: isAdmin ? '12%' : '14%', textAlign: 'right' }}>
+                Actions
               </th>
             </tr>
           </thead>

@@ -51,8 +51,8 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
       <div className="card">
         <EmptyState
           icon={<Globe size={32} />}
-          title="No languages found"
-          description="No languages available matching your search criteria."
+          title="No projects found"
+          description="No projects available matching your search criteria."
         />
       </div>
     );
@@ -124,21 +124,15 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
                       {onDownloadLanguage && (
                         <button
                           type="button"
-                          className="btn-download-action"
+                          className="btn-icon-subtle"
                           onClick={() => onDownloadLanguage(lang)}
                           disabled={downloadingLangId === lang.id}
-                          title={`Download ${lang.name} dataset ZIP archive`}
+                          title={`Download ${lang.name} recordings ZIP archive`}
                         >
                           {downloadingLangId === lang.id ? (
-                            <>
-                              <Loader2 size={13} className="spin-icon" />
-                              <span>Downloading...</span>
-                            </>
+                            <Loader2 size={14} className="spin-icon" />
                           ) : (
-                            <>
-                              <Download size={13} />
-                              <span>Download</span>
-                            </>
+                            <Download size={14} />
                           )}
                         </button>
                       )}
@@ -159,11 +153,11 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
                           type="button"
                           className="btn-icon-subtle danger"
                           onClick={() => {
-                            if (window.confirm(`Are you sure you want to delete language '${lang.name}'?`)) {
+                            if (window.confirm(`Are you sure you want to delete project '${lang.name}'?`)) {
                               onDeleteLanguage(lang.id, lang.name);
                             }
                           }}
-                          title="Delete Language"
+                          title="Delete Project"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -182,7 +176,7 @@ export const LanguageTable: React.FC<LanguageTableProps> = ({
           <span>
             Showing <strong>{startIndex + 1}</strong> -{' '}
             <strong>{Math.min(startIndex + pageSize, languages.length)}</strong> of{' '}
-            <strong>{languages.length}</strong> languages
+            <strong>{languages.length}</strong> projects
           </span>
           <div className="pagination-controls">
             <button

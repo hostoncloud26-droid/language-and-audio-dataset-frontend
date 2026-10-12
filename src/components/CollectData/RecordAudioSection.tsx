@@ -47,6 +47,10 @@ export const RecordAudioSection: React.FC<RecordAudioSectionProps> = ({
   const [playbackCurrentTime, setPlaybackCurrentTime] = useState<number>(0);
   const [playbackDuration, setPlaybackDuration] = useState<number>(0);
 
+  // Confirmation modal state for direct 2-click upload
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  const [pendingUploadFile, setPendingUploadFile] = useState<File | null>(null);
+
   // File dropzone state
   const [dragActive, setDragActive] = useState<boolean>(false);
 
@@ -362,25 +366,30 @@ export const RecordAudioSection: React.FC<RecordAudioSectionProps> = ({
     }
   };
 
-  // Upload Recorded Audio to Server
-  const handleUploadRecordedAudio = async () => {
-    if (!recordedBlob) return;
+  // Confirm and Execute Upload (Direct 2-click flow)
+  const handleConfirmUpload = async () => {
+    setShowConfirmModal(false);
+    if (pendingUploadFile) {
+      const fileToUpload = pendingUploadFile;
+      setPendingUploadFile(null);
+      await onUploadAudio(fileToUpload);
+    } else if (recordedBlob) {
+      // Determine extension based on mimeType
+      const ext = recordedMimeType.includes('ogg')
+        ? '.ogg'
+        : recordedMimeType.includes('wav')
+        ? '.wav'
+        : recordedMimeType.includes('mp4')
+        ? '.m4a'
+        : '.webm';
 
-    // Determine extension based on mimeType
-    const ext = recordedMimeType.includes('ogg')
-      ? '.ogg'
-      : recordedMimeType.includes('wav')
-      ? '.wav'
-      : recordedMimeType.includes('mp4')
-      ? '.m4a'
-      : '.webm';
+      const filename = `recording_${selectedLanguageName.toLowerCase()}_${Date.now()}${ext}`;
+      const file = new File([recordedBlob], filename, {
+        type: recordedBlob.type || 'audio/webm',
+      });
 
-    const filename = `recording_${selectedLanguageName.toLowerCase()}_${Date.now()}${ext}`;
-    const file = new File([recordedBlob], filename, {
-      type: recordedBlob.type || 'audio/webm',
-    });
-
-    await onUploadAudio(file);
+      await onUploadAudio(file);
+    }
   };
 
   // Download Recorded Audio
@@ -408,7 +417,8 @@ export const RecordAudioSection: React.FC<RecordAudioSectionProps> = ({
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       if (file) {
-        onUploadAudio(file);
+        setPendingUploadFile(file);
+        setShowConfirmModal(true);
       }
     }
   };
@@ -417,7 +427,8 @@ export const RecordAudioSection: React.FC<RecordAudioSectionProps> = ({
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       if (file) {
-        onUploadAudio(file);
+        setPendingUploadFile(file);
+        setShowConfirmModal(true);
       }
     }
   };
@@ -673,13 +684,16 @@ export const RecordAudioSection: React.FC<RecordAudioSectionProps> = ({
 
               {/* Upload Option & Record Again */}
               <div className="record-upload-actions-row">
-                {/* Upload Button (Primary Action in Record Section) */}
+                {/* Upload Button (Primary Action in Record Section - 2-Click Direct Upload) */}
                 <button
                   type="button"
                   className="btn-upload-recording-main"
-                  onClick={handleUploadRecordedAudio}
+                  onClick={() => {
+                    setPendingUploadFile(null);
+                    setShowConfirmModal(true);
+                  }}
                   disabled={isUploading}
-                  title="Upload this recording to the platform server"
+                  title="Upload this recording directly to the project dataset"
                 >
                   {isUploading ? (
                     <>
@@ -762,6 +776,62 @@ export const RecordAudioSection: React.FC<RecordAudioSectionProps> = ({
 
             <div className="dropzone-formats-tag">
               Supports WAV, MP3, M4A, OGG, WEBM (Max 50MB)
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2-Click Direct Upload Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="modal-overlay" onClick={() => !isUploading && setShowConfirmModal(false)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div style={{ textAlign: 'center', padding: '8px 0 16px 0' }}>
+              <div
+                style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: 'rgba(139, 92, 246, 0.15)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px auto',
+                  color: 'var(--primary)',
+                }}
+              >
+                <Upload size={24} />
+              </div>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                Confirm Upload
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
+                Are you sure you want to upload this audio {pendingUploadFile ? `file ("${pendingUploadFile.name}")` : 'recording'} to project <strong>"{selectedLanguageName}"</strong>?
+              </p>
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    setPendingUploadFile(null);
+                  }}
+                  disabled={isUploading}
+                  style={{ minWidth: '100px' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handleConfirmUpload}
+                  disabled={isUploading}
+                  style={{ minWidth: '160px', gap: '6px' }}
+                >
+                  <Upload size={15} />
+                  <span>Confirm & Upload</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

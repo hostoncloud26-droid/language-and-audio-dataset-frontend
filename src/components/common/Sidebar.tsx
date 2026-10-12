@@ -1,5 +1,6 @@
 import React from 'react';
-import { FolderKanban, Database, Mic, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { FolderKanban, FileAudio, Mic, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export type NavTab = 'languages' | 'datasets' | 'collect';
 
@@ -16,11 +17,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
   onToggleCollapse,
 }) => {
-  const navItems = [
-    { id: 'languages' as NavTab, label: 'Projects', icon: FolderKanban },
-    { id: 'datasets' as NavTab, label: 'Datasets & Files', icon: Database },
-    { id: 'collect' as NavTab, label: 'Collect Data', icon: Mic },
-  ];
+  const { isAdmin } = useAuth();
+
+  const navItems = isAdmin
+    ? [
+        { id: 'languages' as NavTab, label: 'Projects', icon: FolderKanban },
+        { id: 'datasets' as NavTab, label: 'Audio Recordings', icon: FileAudio },
+        { id: 'collect' as NavTab, label: 'Collect Data', icon: Mic },
+      ]
+    : [
+        { id: 'collect' as NavTab, label: 'Collect Data', icon: Mic },
+        { id: 'datasets' as NavTab, label: 'My Recordings', icon: FileAudio },
+      ];
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -29,7 +37,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="brand-icon">
             <Mic size={20} />
           </div>
-          {!collapsed && <span>Platform</span>}
+          {!collapsed && (
+            <div className="sidebar-brand-text">
+              <span className="brand-title" style={{ fontSize: '0.85rem', lineHeight: 1.2 }}>
+                Allo Audio Dataset
+              </span>
+              {isAdmin && <span className="brand-badge">ADMIN</span>}
+            </div>
+          )}
         </div>
         <button 
           onClick={onToggleCollapse} 
