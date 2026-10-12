@@ -22,9 +22,10 @@ interface DatasetRowProps {
   record: DatasetRecord;
   onDeleteRecord?: (recordId: string) => void;
   onUpdateRecord?: (recordId: string, newText: string) => Promise<void>;
+  isAdmin?: boolean;
 }
 
-export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, onUpdateRecord }) => {
+export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, onUpdateRecord, isAdmin = false }) => {
   const { currentTrackId, isPlaying, currentTime, duration, isLoading, toggleAudio, seekTo } = useAudioPlayer();
   const [copied, setCopied] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -258,6 +259,41 @@ export const DatasetRow: React.FC<DatasetRowProps> = ({ record, onDeleteRecord, 
           </>
         )}
       </td>
+
+      {/* Contributor Column (Administrator view only) */}
+      {isAdmin && (
+        <td style={{ whiteSpace: 'nowrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                width: '26px',
+                height: '26px',
+                borderRadius: '50%',
+                background: 'var(--primary-subtle)',
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: '0.72rem',
+                flexShrink: 0,
+              }}
+            >
+              {(record.uploaded_by || 'C').charAt(0).toUpperCase()}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                {record.uploaded_by || 'System Administrator'}
+              </span>
+              {record.user_id && (
+                <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                  {record.user_id}
+                </span>
+              )}
+            </div>
+          </div>
+        </td>
+      )}
 
       {/* 3. Type Column (Audio Format & Storage Source) */}
       <td>

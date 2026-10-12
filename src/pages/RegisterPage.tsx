@@ -27,7 +27,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
   // Form states
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
-  const [role, setRole] = useState('Dataset Specialist');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +47,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
       return;
     }
     if (!cleanUser || !cleanUser.includes('@') || !cleanUser.includes('.')) {
-      setValidationError('Please enter a valid email address.');
+      setValidationError('Please enter a valid work or personal email address.');
       return;
     }
     if (cleanPass.length < 4) {
@@ -61,7 +60,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
     }
 
     try {
-      await register(cleanUser, cleanPass, cleanName, role);
+      await register(cleanUser, cleanPass, cleanName);
     } catch {
       // Error handled in AuthContext
     }
@@ -258,25 +257,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin })
                   disabled={isLoading}
                 />
               </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="register-role">
-                Platform Role
-              </label>
-              <select
-                id="register-role"
-                className="dataset-select"
-                style={{ width: '100%', height: '44px' }}
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                disabled={isLoading}
-              >
-                <option value="Dataset Specialist">Dataset Specialist</option>
-                <option value="Speech Annotator">Speech Annotator</option>
-                <option value="Dataset Reviewer">Dataset Reviewer</option>
-                <option value="Administrator">Administrator</option>
-              </select>
             </div>
 
             <div className="form-group">

@@ -37,7 +37,19 @@ export interface DatasetRecord {
   language_id: string | number;
   language_name?: string;
   duration?: number | string;
+  user_id?: string;
+  uploaded_by?: string;
   created_at: string;
+}
+
+export interface ContributorSummary {
+  id: string;
+  username: string;
+  name: string;
+  role: string;
+  upload_count: number;
+  total_duration: number;
+  created_at?: string;
 }
 
 export type CollectionStep = 

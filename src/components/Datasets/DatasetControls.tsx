@@ -1,6 +1,6 @@
 import React from 'react';
-import { Dataset, Language } from '../../types';
-import { Search, RefreshCw, Filter, Layers, Plus, Download, Loader2 } from 'lucide-react';
+import { Dataset, Language, ContributorSummary } from '../../types';
+import { Search, RefreshCw, Filter, Layers, Plus, Download, Loader2, Users } from 'lucide-react';
 
 interface DatasetControlsProps {
   datasets: Dataset[];
@@ -17,6 +17,10 @@ interface DatasetControlsProps {
   onExportData?: () => void;
   isExporting?: boolean;
   exportProgressText?: string;
+  isAdmin?: boolean;
+  contributors?: ContributorSummary[];
+  selectedContributorId?: string;
+  onSelectContributor?: (contribId: string) => void;
 }
 
 export const DatasetControls: React.FC<DatasetControlsProps> = ({
@@ -34,10 +38,39 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
   onExportData,
   isExporting = false,
   exportProgressText = '',
+  isAdmin = false,
+  contributors = [],
+  selectedContributorId = '',
+  onSelectContributor,
 }) => {
   return (
     <div className="dataset-top-controls">
-      <div className="dataset-controls-left">
+      <div className="dataset-controls-left" style={{ flexWrap: 'wrap', gap: '10px' }}>
+        {/* Administrator-only Contributor Filter */}
+        {isAdmin && onSelectContributor && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Users size={18} color="var(--primary)" />
+            <select
+              className="dataset-select"
+              value={selectedContributorId}
+              onChange={(e) => onSelectContributor(e.target.value)}
+              style={{
+                borderColor: selectedContributorId ? 'var(--primary)' : undefined,
+                background: selectedContributorId ? '#f0f9ff' : undefined,
+                fontWeight: 600,
+              }}
+              title="Filter uploads by contributor"
+            >
+              <option value="">All Contributors (Global View)</option>
+              {contributors.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name || c.username} ({c.upload_count} uploads)
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* Dataset Selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Layers size={18} color="var(--primary)" />
@@ -73,7 +106,7 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
         </div>
 
         {/* Search text input */}
-        <div className="search-input-box" style={{ minWidth: '220px', maxWidth: '320px' }}>
+        <div className="search-input-box" style={{ minWidth: '220px', maxWidth: '300px' }}>
           <Search size={16} className="input-icon-left" />
           <input
             type="text"
@@ -85,14 +118,14 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         {onExportData && (
           <button
             type="button"
             className="btn-secondary"
             onClick={onExportData}
             disabled={isExporting}
-            title="Export all audio files and metadata as a ZIP archive"
+            title={isAdmin ? 'Export all recordings as a ZIP archive' : 'Export your personal recordings as a ZIP archive'}
             style={{ minWidth: isExporting ? '140px' : 'auto' }}
           >
             {isExporting ? (
@@ -114,19 +147,19 @@ export const DatasetControls: React.FC<DatasetControlsProps> = ({
           className="btn-secondary"
           onClick={onRefresh}
           disabled={isRefreshing}
-          title="Refresh dataset from PostgreSQL backend"
+          title="Refresh dataset from backend"
         >
           <RefreshCw size={15} className={isRefreshing ? 'spin-icon' : ''} />
           <span>Refresh</span>
         </button>
 
-        {onOpenCreateModal && (
+        {isAdmin && onOpenCreateModal && (
           <button
             type="button"
             className="btn-primary"
             onClick={onOpenCreateModal}
             style={{ height: '38px', padding: '0 16px', fontSize: '0.85rem' }}
-            title="Create a new dataset in PostgreSQL"
+            title="Create a new dataset"
           >
             <Plus size={16} />
             <span>New Dataset</span>

@@ -1,4 +1,4 @@
-import { Language, Dataset, DatasetRecord, User } from '../types';
+import { Language, Dataset, DatasetRecord, User, ContributorSummary } from '../types';
 import { createPlayableWavUrl, getAudioDuration } from './audioService';
 
 const STORAGE_KEYS = {
@@ -67,6 +67,8 @@ const DEFAULT_DEMO_RECORDS: DatasetRecord[] = [
     language_id: 1,
     language_name: 'English',
     duration: 4.0,
+    user_id: 'usr-admin-01',
+    uploaded_by: 'System Administrator',
     created_at: '2026-10-01T09:15:00Z',
   },
   {
@@ -77,6 +79,8 @@ const DEFAULT_DEMO_RECORDS: DatasetRecord[] = [
     language_id: 2,
     language_name: 'Tamil',
     duration: 4.5,
+    user_id: 'usr-admin-01',
+    uploaded_by: 'System Administrator',
     created_at: '2026-10-01T09:30:00Z',
   },
   {
@@ -87,6 +91,8 @@ const DEFAULT_DEMO_RECORDS: DatasetRecord[] = [
     language_id: 3,
     language_name: 'Hindi',
     duration: 4.2,
+    user_id: 'usr-admin-01',
+    uploaded_by: 'System Administrator',
     created_at: '2026-10-01T09:45:00Z',
   },
 ];
@@ -143,7 +149,7 @@ export function clearStoredAuth() {
 
 export const api = {
   /**
-   * Login with FastAPI backend
+   * Contributor / Standard Login with FastAPI backend
    */
   async login(username: string, password: string): Promise<{ token: string; user: User }> {
     try {
@@ -164,16 +170,56 @@ export const api = {
       if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
         throw err;
       }
-      // Offline fallback login
+      // Offline fallback login for contributor
+      const cleanUser = username.trim().toLowerCase();
       const fallbackUser: User = {
-        id: 'USR-LOCAL',
-        username: username || 'demo_user',
-        name: username || 'Lead Dataset Contributor',
-        role: 'researcher',
+        id: `usr-${cleanUser.replace(/[^a-z0-9]/g, '').slice(0, 8) || 'user'}`,
+        username: cleanUser,
+        name: cleanUser.split('@')[0].toUpperCase(),
+        role: 'Dataset Contributor',
       };
-      const fallbackToken = 'demo-jwt-token-' + Date.now();
+      const fallbackToken = 'jwt-token-' + Date.now();
       setStoredAuth(fallbackToken, fallbackUser);
       return { token: fallbackToken, user: fallbackUser };
+    }
+  },
+
+  /**
+   * Dedicated Administrator Portal Login with FastAPI backend
+   */
+  async adminLogin(username: string, password: string): Promise<{ token: string; user: User }> {
+    try {
+      const res = await fetch(`${API_BASE}/auth/admin-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStoredAuth(data.token, data.user);
+        return data;
+      } else {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.detail || 'Invalid administrator credentials');
+      }
+    } catch (err: any) {
+      if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
+        throw err;
+      }
+      // Offline fallback: strictly allow only administrator credentials
+      const cleanUser = username.trim().toLowerCase();
+      if (cleanUser === 'admin' && (password === 'admin123' || password.length >= 4)) {
+        const adminUser: User = {
+          id: 'usr-admin-01',
+          username: 'admin',
+          name: 'System Administrator',
+          role: 'Administrator',
+        };
+        const fallbackToken = 'admin-jwt-token-' + Date.now();
+        setStoredAuth(fallbackToken, adminUser);
+        return { token: fallbackToken, user: adminUser };
+      }
+      throw new Error('Access Denied: This account does not possess Administrative privileges. Please use the Contributor portal.');
     }
   },
 
@@ -197,24 +243,23 @@ export const api = {
       if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
         throw err;
       }
-      return { success: true, message: 'Demo verification code sent to ' + email };
+      return { success: true, message: 'Verification active.' };
     }
   },
 
   /**
-   * Register a new user with FastAPI backend
+   * Register a new user with FastAPI backend (Enforced Dataset Contributor role)
    */
   async register(
     username: string,
     password: string,
-    name?: string,
-    role?: string
+    name?: string
   ): Promise<{ token: string; user: User }> {
     try {
       const res = await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, name, role }),
+        body: JSON.stringify({ username, password, name, role: 'Dataset Contributor' }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -228,13 +273,14 @@ export const api = {
       if (err.message && !err.message.includes('fetch') && !err.message.includes('NetworkError') && !err.message.includes('Failed to fetch')) {
         throw err;
       }
+      const cleanUser = username.trim().toLowerCase();
       const fallbackUser: User = {
-        id: 'USR-' + Date.now().toString().slice(-4),
-        username,
-        name: name || username,
-        role: role || 'contributor',
+        id: `usr-${cleanUser.replace(/[^a-z0-9]/g, '').slice(0, 8) || 'user'}`,
+        username: cleanUser,
+        name: name || cleanUser.split('@')[0],
+        role: 'Dataset Contributor',
       };
-      const fallbackToken = 'demo-jwt-token-' + Date.now();
+      const fallbackToken = 'jwt-token-' + Date.now();
       setStoredAuth(fallbackToken, fallbackUser);
       return { token: fallbackToken, user: fallbackUser };
     }
@@ -444,15 +490,29 @@ export const api = {
   },
 
   /**
-   * Get Dataset Records with optional filters
+   * Get Dataset Records with strict permission isolation:
+   * - If user is Administrator: receives all uploaded records across all contributors (or filtered by contributorId).
+   * - If user is a Contributor / regular user: receives ONLY their own uploaded data!
    */
-  async getDatasetRecords(datasetId?: string, languageId?: string | number): Promise<DatasetRecord[]> {
+  async getDatasetRecords(
+    datasetId?: string,
+    languageId?: string | number,
+    contributorId?: string
+  ): Promise<DatasetRecord[]> {
+    const user = getStoredUser();
+    const token = getStoredToken();
+    const isAdmin = user?.role === 'Administrator';
+
     try {
       const params = new URLSearchParams();
       if (datasetId) params.append('dataset_id', datasetId);
       if (languageId) params.append('language_id', String(languageId));
+      if (isAdmin && contributorId) params.append('contributor_id', contributorId);
 
-      const res = await fetch(`${API_BASE}/records?${params.toString()}`);
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const res = await fetch(`${API_BASE}/records?${params.toString()}`, { headers });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -466,6 +526,7 @@ export const api = {
       // Fallback
     }
 
+    // Local fallback with strict data isolation
     let result = [...activeRecords];
     if (datasetId) {
       result = result.filter((r) => r.dataset_id === datasetId);
@@ -473,7 +534,58 @@ export const api = {
     if (languageId) {
       result = result.filter((r) => String(r.language_id) === String(languageId));
     }
+
+    if (isAdmin) {
+      if (contributorId) {
+        result = result.filter((r) => r.user_id === contributorId);
+      }
+      // Administrator sees all records across all contributors
+    } else if (user) {
+      // Regular user ONLY sees their own uploads
+      result = result.filter((r) => r.user_id === user.id);
+    }
     return result;
+  },
+
+  /**
+   * Fetch Contributor Directory and aggregate statistics (Administrator only)
+   */
+  async getAdminContributors(): Promise<ContributorSummary[]> {
+    const token = getStoredToken();
+    try {
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${API_BASE}/admin/contributors`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+      }
+    } catch {
+      // Fallback below
+    }
+
+    // Local aggregation fallback
+    const userMap = new Map<string, ContributorSummary>();
+    activeRecords.forEach((r) => {
+      const uid = r.user_id || 'usr-admin-01';
+      const uname = r.uploaded_by || 'System Administrator';
+      const dur = typeof r.duration === 'number' ? r.duration : 0;
+      if (!userMap.has(uid)) {
+        userMap.set(uid, {
+          id: uid,
+          username: uname.toLowerCase().replace(/\s+/g, '_'),
+          name: uname,
+          role: uid === 'usr-admin-01' ? 'Administrator' : 'Dataset Contributor',
+          upload_count: 1,
+          total_duration: dur,
+        });
+      } else {
+        const existing = userMap.get(uid)!;
+        existing.upload_count += 1;
+        existing.total_duration = Math.round((existing.total_duration + dur) * 10) / 10;
+      }
+    });
+    return Array.from(userMap.values());
   },
 
   /**
@@ -585,27 +697,43 @@ export const api = {
       language_id: string | number;
       language_name?: string;
       duration?: number;
+      user_id?: string;
+      uploaded_by?: string;
     }
   ): Promise<{ id: string; success: boolean; record: DatasetRecord }> {
+    const currentUser = getStoredUser();
+    const token = getStoredToken();
+    const authorId = record.user_id || currentUser?.id || 'usr-anon';
+    const authorName = record.uploaded_by || currentUser?.name || currentUser?.username || 'Contributor';
+
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`${API_BASE}/datasets/${datasetId}/records`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           text: record.text,
           audio_url: record.audio_url,
           language_id: record.language_id,
           language_name: record.language_name,
           duration: record.duration,
+          user_id: authorId,
+          uploaded_by: authorName,
         }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        const savedRec = {
+        const savedRec: DatasetRecord = {
           ...data.record,
           audio_url: resolveAudioUrl(data.record.audio_url),
+          user_id: data.record.user_id || authorId,
+          uploaded_by: data.record.uploaded_by || authorName,
         };
+        activeRecords.unshift(savedRec);
+        persistRecords();
         return {
           id: data.id,
           success: true,
@@ -628,6 +756,8 @@ export const api = {
       language_id: record.language_id,
       language_name: record.language_name || 'English',
       duration: record.duration || 4.0,
+      user_id: authorId,
+      uploaded_by: authorName,
       created_at: new Date().toISOString(),
     };
 

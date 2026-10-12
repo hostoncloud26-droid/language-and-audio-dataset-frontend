@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Language } from '../types';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { exportDatasetAsZip } from '../services/zipExportService';
 import { LanguageSearch } from '../components/Languages/LanguageSearch';
 import { LanguageTable } from '../components/Languages/LanguageTable';
 import { Globe, RefreshCw, Plus, X, Loader2, CheckCircle2 } from 'lucide-react';
 
 export const LanguagesPage: React.FC = () => {
+  const { isAdmin } = useAuth();
   const [languages, setLanguages] = useState<Language[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -48,6 +50,10 @@ export const LanguagesPage: React.FC = () => {
 
   const handleCreateLanguage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      setModalError('Administrative clearance required to create language projects.');
+      return;
+    }
     const cleanName = newLangName.trim();
     if (!cleanName) {
       setModalError('Language name is required.');
@@ -73,6 +79,7 @@ export const LanguagesPage: React.FC = () => {
   };
 
   const handleToggleStatus = async (langId: string | number, currentStatus: string) => {
+    if (!isAdmin) return;
     const nextStatus = currentStatus.toLowerCase() === 'active' ? 'Inactive' : 'Active';
     try {
       await api.updateLanguage(langId, { status: nextStatus });
@@ -86,6 +93,7 @@ export const LanguagesPage: React.FC = () => {
   };
 
   const handleDeleteLanguage = async (langId: string | number, langName: string) => {
+    if (!isAdmin) return;
     try {
       await api.deleteLanguage(langId);
       setLanguages((prev) => prev.filter((l) => String(l.id) !== String(langId)));
@@ -128,7 +136,7 @@ export const LanguagesPage: React.FC = () => {
           ],
           telugu: [
             'నమస్కారం, ఇది ఒక తెలుగు ఆడియో డేటాసెట్.',
-            'ధ్వని సంశ్లేషణ మరియు వాక్ గుర్తింపు ప్రాజెక్ట్.',
+            'ధ్వని సంశ్లేషణ మరియు వాక్ గుర్तिంపు ప్రాజెక్ట్.',
             'భాషా డేటాబేస్ ఆడియో రికార్డింగ్.',
           ],
           marathi: [
@@ -185,10 +193,12 @@ export const LanguagesPage: React.FC = () => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Projects
+            Language Projects
           </h2>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-            Projects and language tracks configured for audio dataset collection ({languages.length} total)
+            {isAdmin
+              ? `Manage speech language corpora and project configurations (${languages.length} total)`
+              : `Active language tracks available for recording and dataset export (${languages.length} total)`}
           </p>
         </div>
 
@@ -203,18 +213,20 @@ export const LanguagesPage: React.FC = () => {
             <span>Refresh</span>
           </button>
 
-          <button
-            className="btn-primary"
-            onClick={() => {
-              setIsModalOpen(true);
-              setModalError(null);
-            }}
-            style={{ height: '38px', padding: '0 16px', fontSize: '0.85rem' }}
-            title="Add a new project to the platform"
-          >
-            <Plus size={16} />
-            <span>Add Project</span>
-          </button>
+          {isAdmin && (
+            <button
+              className="btn-primary"
+              onClick={() => {
+                setIsModalOpen(true);
+                setModalError(null);
+              }}
+              style={{ height: '38px', padding: '0 16px', fontSize: '0.85rem' }}
+              title="Add a new project to the platform"
+            >
+              <Plus size={16} />
+              <span>Add Project</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -225,8 +237,8 @@ export const LanguagesPage: React.FC = () => {
         isLoading={isLoading}
         error={error}
         onRetry={fetchLanguages}
-        onToggleStatus={handleToggleStatus}
-        onDeleteLanguage={handleDeleteLanguage}
+        onToggleStatus={isAdmin ? handleToggleStatus : undefined}
+        onDeleteLanguage={isAdmin ? handleDeleteLanguage : undefined}
         onDownloadLanguage={handleDownloadLanguage}
         downloadingLangId={downloadingLangId}
         pageSize={6}

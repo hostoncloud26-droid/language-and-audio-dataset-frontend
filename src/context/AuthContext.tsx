@@ -4,10 +4,12 @@ import { api, getStoredToken, getStoredUser, clearStoredAuth } from '../services
 
 interface AuthContextType extends AuthState {
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, password: string, name?: string, role?: string) => Promise<void>;
+  adminLogin: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string, name?: string) => Promise<void>;
   logout: () => void;
   error: string | null;
   clearError: () => void;
+  isAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,11 +47,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (username: string, password: string, name?: string, role?: string) => {
+  const adminLogin = async (username: string, password: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.register(username, password, name, role);
+      const response = await api.adminLogin(username, password);
+      setToken(response.token);
+      setUser(response.user);
+    } catch (err: any) {
+      setError(err.message || 'Invalid administrator credentials');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (username: string, password: string, name?: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await api.register(username, password, name);
       setToken(response.token);
       setUser(response.user);
     } catch (err: any) {
@@ -69,6 +86,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearError = () => setError(null);
 
+  const isAdmin = user?.role === 'Administrator';
+
   return (
     <AuthContext.Provider
       value={{
@@ -78,9 +97,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         error,
         login,
+        adminLogin,
         register,
         logout,
         clearError,
+        isAdmin,
       }}
     >
       {children}

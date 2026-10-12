@@ -4,7 +4,7 @@ import { DatasetRow } from './DatasetRow';
 import { TableSkeleton } from '../common/TableSkeleton';
 import { EmptyState } from '../common/EmptyState';
 import { ErrorBanner } from '../common/ErrorBanner';
-import { Mic, Clock, FileAudio, Download, FileText } from 'lucide-react';
+import { Mic, Clock, FileAudio, Download, FileText, Users } from 'lucide-react';
 
 interface DatasetTableProps {
   records: DatasetRecord[];
@@ -15,6 +15,7 @@ interface DatasetTableProps {
   onDeleteRecord?: (recordId: string) => void;
   onUpdateRecord?: (recordId: string, newText: string) => Promise<void>;
   pageSize?: number;
+  isAdmin?: boolean;
 }
 
 export const DatasetTable: React.FC<DatasetTableProps> = ({
@@ -26,13 +27,14 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
   onDeleteRecord,
   onUpdateRecord,
   pageSize = 6,
+  isAdmin = false,
 }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   if (isLoading) {
     return (
       <div className="card">
-        <TableSkeleton rows={pageSize} columns={6} />
+        <TableSkeleton rows={pageSize} columns={isAdmin ? 7 : 6} />
       </div>
     );
   }
@@ -50,9 +52,13 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
       <div className="card">
         <EmptyState
           icon={<Mic size={32} />}
-          title="No audio data available."
-          description="Start collecting audio data to populate this dataset."
-          actionText="Collect Data"
+          title={isAdmin ? "No contributor audio recordings found." : "No uploaded audio recordings yet."}
+          description={
+            isAdmin
+              ? "No contributor uploads match the active filter criteria."
+              : "You haven't uploaded or recorded any speech samples yet. Head to Collect Data to contribute your first utterance."
+          }
+          actionText="Collect & Record Audio"
           onAction={onNavigateToCollect}
         />
       </div>
@@ -69,24 +75,31 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
         <table className="data-table">
           <thead>
             <tr>
-              <th style={{ width: '12%' }}>ID</th>
-              <th style={{ width: '28%' }}>
+              <th style={{ width: '10%' }}>ID</th>
+              <th style={{ width: isAdmin ? '24%' : '28%' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <FileText size={14} /> Transcript
                 </span>
               </th>
-              <th style={{ width: '11%' }}>
+              {isAdmin && (
+                <th style={{ width: '16%' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                    <Users size={14} /> Contributor
+                  </span>
+                </th>
+              )}
+              <th style={{ width: '10%' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <FileAudio size={14} /> Type
                 </span>
               </th>
-              <th style={{ width: '16%' }}>
+              <th style={{ width: '15%' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <Clock size={14} /> Upload Time
                 </span>
               </th>
-              <th style={{ width: '18%' }}>Audio Preview</th>
-              <th style={{ width: '15%', textAlign: 'right' }}>
+              <th style={{ width: '17%' }}>Audio Preview</th>
+              <th style={{ width: '14%', textAlign: 'right' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   <Download size={14} /> Download & Actions
                 </span>
@@ -100,6 +113,7 @@ export const DatasetTable: React.FC<DatasetTableProps> = ({
                 record={record}
                 onDeleteRecord={onDeleteRecord}
                 onUpdateRecord={onUpdateRecord}
+                isAdmin={isAdmin}
               />
             ))}
           </tbody>

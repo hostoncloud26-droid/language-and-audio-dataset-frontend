@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Language, Dataset, AudioItem, DatasetRecord, CollectionStep } from '../types';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { LanguageSelector } from '../components/CollectData/LanguageSelector';
 import { TextInputArea } from '../components/CollectData/TextInputArea';
 import { RecordAudioSection } from '../components/CollectData/RecordAudioSection';
@@ -15,6 +16,7 @@ interface CollectDataPageProps {
 }
 
 export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDatasets }) => {
+  const { user } = useAuth();
   const [languages, setLanguages] = useState<Language[]>([]);
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [selectedLanguageId, setSelectedLanguageId] = useState<string | number>('');
@@ -181,6 +183,8 @@ export const CollectDataPage: React.FC<CollectDataPageProps> = ({ onNavigateToDa
         language_id: selectedLanguage.id,
         language_name: selectedLanguage.name,
         duration: audioItem.duration,
+        user_id: user?.id,
+        uploaded_by: user?.name || user?.username || 'Contributor',
       });
 
       setSavedRecord(response.record);
